@@ -22,18 +22,18 @@ The zero-knowledge range-proof requires a commitment on a number by a trusted pa
 
 ## Fiat–Shamir
 
-Though the original 'Efficient range-proof'  by Kun Peng required interaction between the prover and the validator, we adjusted the protocol to become non interactive so that it would become usable on a blockchain (where each node needs to be able to verify autonomously without interaction with the client). We made the protocol non-interactive using the Fiat–Shamir heuristic.
+Though the original 'Efficient range-proof' by Kun Peng required interaction between the prover and the validator, we adjusted the protocol to become non-interactive so that it would become usable on a blockchain (where each node needs to be able to verify autonomously without interaction with the client). We made the protocol non-interactive using the Fiat–Shamir heuristic.
 
 ## Precompiled contract
 
 The range proof consists of 2 parts:
  * Generating the proof that a number is within an interval (outside the blockchain by the client that submits that proof)
- * Validating the proof that that number is within that interval. (executed by each validating node on the blockchain)
+ * Validating the proof that this number is within that interval (executed by each validating node on the blockchain)
 
-On Ethereum validation of transactions in smart contract logic is done typically done in the Ethereum Virtual Machine. However the operations involved in the validation of this range-proof are too computationally expensive to run on the EVM. Therefore we validate the range proof in a precompiled contract. We added this precompiled contract to the Ethereum Go Client (Geth).  A precompiled contract is written in the native language of the Ethereum-client (in our case in Golang) and is preconfigured to live at a specific address (with a low number). The precompiled contract can be called from Solidity in 2 ways:
+On Ethereum validation of transactions in smart contract logic is typically done in the Ethereum Virtual Machine. However the operations involved in the validation of this range-proof are too computationally expensive to run on the EVM. Therefore we validate the range proof in a precompiled contract. We added this precompiled contract to the Ethereum Go Client (Geth).  A precompiled contract is written in the native language of the Ethereum-client (in our case in Golang) and is preconfigured to live at a specific address (with a low number). The precompiled contract can be called from Solidity in 2 ways:
 
- * By referring the to address with a Solidity interface (works until Solidity 0.3.6. and requires the address to have a balance of at least one wei (preconfigured in the genesis block)).
- * By extending the Solidity language to include additional functions in which case the solidity code will be compiled to call the precompiled smart contract at the same preconfigured address.
+ * By referring to the address with a Solidity interface (works until Solidity 0.3.6. and requires the address to have a balance of at least one wei (preconfigured in the genesis block)).
+ * By extending the Solidity language to include additional functions in which case the Solidity code will be compiled to call the precompiled smart contract at the same preconfigured address.
 
  ## Gas consumption
 
@@ -43,6 +43,7 @@ On Ethereum validation of transactions in smart contract logic is done typically
 
 
 
- Determining the right gas-consumption is crucial for correct functioning of Ethereum. Too low gas introduces a DOS vulnerability,   attackers can make the network slow by calling computationally hard functions while paying relatively little. Too high gas wastes people’s money.
+ Determining the right gas-consumption is crucial for correct functioning of Ethereum. Too low gas introduces a DOS vulnerability, attackers can make the network slow by calling computationally hard functions while paying relatively little. Too high gas wastes people’s money.
 
- We benchmarked the zkRangeProof verification against various other built-in Ethereum functions which resulted in a gas-consumption of 180.000.
+
+ We benchmarked the zkRangeProof verification against various other built-in Ethereum functions which resulted in a gas-consumption of 180,000.
