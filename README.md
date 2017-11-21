@@ -2,6 +2,11 @@
 
 ING's zero knowledge range-proof precompiled contract for the go-ethereum client.
 
+## Important note:
+
+The current version of this library implements the whitepaper “An Efficient Range Proof Scheme” by Kun Peng and Feng Bao. This protocol contains a security vulnerability: the magnitude of the committed value is leaked from public values in the proofs. Therefore, the proof is not zero knowledge. We’re currently evaluating which protocol to use instead in order to provide a secure Zero Knowledge Proof protocol.
+
+
 ## Intro
 
 One fundamental concern in blockchain technology is the confidentiality of the data on the blockchain. In order to reach consensus between all independent nodes in a blockchain network, each node must be able to validate all transactions (for instance against double-spent), in most cases this means that the content of the transactions is visible to all nodes. Fortunately several solutions exist that preserve confidentiality on a blockchain (private transactions, HyperLedger Fabric Channels, Payment Channels, Homomorphic encryption, transaction-mixing, zero knowledge proofs etc.). This article describes the implementation of a zero-knowledge range-proof in Ethereum.
