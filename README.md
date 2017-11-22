@@ -4,8 +4,11 @@ ING's zero knowledge range-proof precompiled contract for the go-ethereum client
 
 ## Important note:
 
-The current version of this library implements the whitepaper “An Efficient Range Proof Scheme” by Kun Peng and Feng Bao. This protocol contains a security vulnerability: the magnitude of the committed value is leaked from public values in the proofs. Therefore, the proof is not zero knowledge. We’re currently evaluating which protocol to use instead in order to provide a secure Zero Knowledge Proof protocol.
+The current version of this library implements the whitepaper “An Efficient Range Proof Scheme” by Kun Peng and Feng Bao. As discovered by Madars Virza, Research Scientist MIT Media Lab, this protocol contains a potential security vulnerability. 
 
+*“The publicly computable value y/t is roughly the same magnitude (in expectation) as w^2 \* (m-a+1)(b-m+1). However, w^2 has fixed bit length (again, in expectation) and thus for a fixed range, this value leaks the magnitude of the committed value.”*
+
+Therefore, the proof is not zero knowledge. We’re currently evaluating which protocol to use instead in order to provide a secure Zero Knowledge Proof protocol.
 
 ## Intro
 
