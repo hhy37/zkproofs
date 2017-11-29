@@ -159,7 +159,8 @@ func CalculateHash(b1 *big.Int, b2 *big.Int) *big.Int {
 	}
 	output := digest.Sum(nil)
 	tmp := output[0: len(output)]
-	return byteconversion.FromByteArray(tmp)
+	result, _ := byteconversion.FromByteArray(tmp)
+	return result
 }
 
 /**
