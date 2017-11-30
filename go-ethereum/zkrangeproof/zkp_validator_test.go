@@ -29,8 +29,8 @@ func TestCalculateHash(t * testing.T) {
 	b := GetBigInt("5711912074763938920844020768820827016918638588776093786691324830937965710562669998102969607754216881533101753509522661181935679768137553251696427895001308210043958162362474454915118307661021406997989560047755201343617470288619030784987198511772840498354380632474664457429003510207310347179884080000294301502325103527312780599913053243627156705417875172756769585807691558680079741149166677442267851492473670184071199725213912264373214980177804010561543807969309223405291240876888702197126709861726023144260487044339708816278182396486957437256069194438047922679665536060592545457448379589893428429445378466414731324407")
 
 	expectedResult := GetBigInt("-19913561841364303941087968013056854925409568225408501509608065500928998362191")
-	actualResult := CalculateHash(a, b)
-	actualResult2 := CalculateHash(a, b)
+	actualResult, _ := CalculateHash(a, b)
+	actualResult2, _ := CalculateHash(a, b)
 
 	if expectedResult.Cmp(actualResult) != 0 {
 		t.Errorf("Assert failure: hashed is: ", actualResult)
@@ -50,7 +50,7 @@ func TestModPow1(t *testing.T) {
 
 	if result.Cmp(big.NewInt(6)) != 0 {
 		t.Errorf("Assert failure: expected 6, actual: ", result)
-	} 
+	}
 }
 
 func TestModPow2(t *testing.T) {
@@ -63,24 +63,24 @@ func TestModPow2(t *testing.T) {
 
 	if result.Cmp(big.NewInt(4)) != 0 {
 		t.Errorf("Assert failure: expected 4, actual: ", result)
-	} 
+	}
 }
 
 func TestModPowNegativeExp1(t *testing.T) {
 
-	result := ModPow(big.NewInt(16), big.NewInt(-1), big.NewInt(7)) 
+	result := ModPow(big.NewInt(16), big.NewInt(-1), big.NewInt(7))
 
 	if result.Cmp(big.NewInt(4)) != 0 {
-		t.Errorf("Assert failure: expected 4, actual: ", result)	
+		t.Errorf("Assert failure: expected 4, actual: ", result)
 	}
 }
 
 func TestModPowNegativeExp2(t *testing.T) {
 
-	result := ModPow(big.NewInt(34), big.NewInt(-2), big.NewInt(9)) 
+	result := ModPow(big.NewInt(34), big.NewInt(-2), big.NewInt(9))
 
 	if result.Cmp(big.NewInt(7)) != 0 {
-		t.Errorf("Assert failure: expected 7, actual: ", result)	
+		t.Errorf("Assert failure: expected 7, actual: ", result)
 	}
 }
 

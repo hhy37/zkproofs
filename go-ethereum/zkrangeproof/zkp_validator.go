@@ -60,7 +60,7 @@ func ValidateRangeProof(lowerLimit *big.Int,
 
 	// Derived information
 	tmp := ModPow(g, Sub(lowerLimit, big.NewInt(1)), N)
-	c1 := Mod(Multiply(ModInverse(tmp, N), c), N) 
+	c1 := Mod(Multiply(ModInverse(tmp, N), c), N)
 	c2 := Mod(Multiply(ModPow(g, Add(upperLimit, big.NewInt(1)), N), ModInverse(c, N)), N)
 
 	cPrimePrime := Mod(Multiply(Multiply(cPrime1, cPrime2), cPrime3), N)
@@ -71,8 +71,14 @@ func ValidateRangeProof(lowerLimit *big.Int,
  		return false;
  	}
 
-	s := Add(Mod(CalculateHash(c1, nil), k1), big.NewInt(1))
-	t := Add(Mod(CalculateHash(c2, nil), k1), big.NewInt(1))
+  hashC1, errC1 := CalculateHash(c1, nil)
+  hashC2, errC2 := CalculateHash(c2, nil)
+  if errC1 != nil || errC2 != nil {
+    fmt.Println("Failure: empty ByteArray in CalculateHash [c1 or c2]")
+    return false
+  }
+	s := Add(Mod(hashC1, k1), big.NewInt(1))
+	t := Add(Mod(hashC2, k1), big.NewInt(1))
 
 	if (!HPAKESquareValidateZeroKnowledgeProof (N, cPrime, h, cPrimePrime, squareProof3)) {
 		fmt.Println("HPAKESquare failure at first square")
@@ -146,11 +152,16 @@ func HPAKEEqualityConstraintValidateZeroKnowledgeProof (
 	W1 := Mod(Multiply(Multiply(ModPow(g1, D, N), ModPow(h1, D1, N)), ModPow(E, Multiply(C, new(big.Int).SetInt64(-1)), N)), N)
 	W2 := Mod(Multiply(Multiply(ModPow(g2, D, N), ModPow(h2, D2, N)), ModPow(F, Multiply(C, new(big.Int).SetInt64(-1)), N)), N)
 
-	return C.Cmp(CalculateHash(W1, W2)) == 0
+  hashW, errW := CalculateHash(W1, W2)
+  if errW != nil {
+    fmt.Println("Failure: empty ByteArray in CalculateHash [W1, W2]")
+    return false
+  }
+	return C.Cmp(hashW) == 0
 }
 
 
-func CalculateHash(b1 *big.Int, b2 *big.Int) *big.Int {
+func CalculateHash(b1 *big.Int, b2 *big.Int) (*big.Int, error) {
 
 	digest := sha256.New()
 	digest.Write(byteconversion.ToByteArray(b1))
@@ -159,13 +170,12 @@ func CalculateHash(b1 *big.Int, b2 *big.Int) *big.Int {
 	}
 	output := digest.Sum(nil)
 	tmp := output[0: len(output)]
-	result, _ := byteconversion.FromByteArray(tmp)
-	return result
+	return byteconversion.FromByteArray(tmp)
 }
 
 /**
  * Returns base**exponent mod |modulo| also works for negative exponent (contrary to big.Int.Exp)
- */						
+ */
 func ModPow(base *big.Int, exponent *big.Int, modulo *big.Int) *big.Int {
 
 	var returnValue *big.Int
