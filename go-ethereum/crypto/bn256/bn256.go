@@ -64,7 +64,12 @@ func (e *G1) ScalarBaseMult(k *big.Int) *G1 {
 	if e.p == nil {
 		e.p = newCurvePoint(nil)
 	}
-	e.p.Mul(curveGen, k, new(bnPool))
+	if k.Cmp(big.NewInt(0)) >=0 {
+		e.p.Mul(curveGen, k, new(bnPool))
+	} else {
+		e.p.Negative(e.p.Mul(curveGen, new(big.Int).Abs(k), new(bnPool)))
+	}
+	//e.p.Mul(curveGen, k, new(bnPool))
 	return e
 }
 
@@ -73,7 +78,12 @@ func (e *G1) ScalarMult(a *G1, k *big.Int) *G1 {
 	if e.p == nil {
 		e.p = newCurvePoint(nil)
 	}
-	e.p.Mul(a.p, k, new(bnPool))
+	if k.Cmp(big.NewInt(0)) >=0 {
+		e.p.Mul(a.p, k, new(bnPool))
+	} else {
+		e.p.Negative(e.p.Mul(a.p, new(big.Int).Abs(k), new(bnPool)))
+	}
+	//e.p.Mul(a.p, k, new(bnPool))
 	return e
 }
 
@@ -187,7 +197,12 @@ func (e *G2) ScalarBaseMult(k *big.Int) *G2 {
 	if e.p == nil {
 		e.p = newTwistPoint(nil)
 	}
-	e.p.Mul(twistGen, k, new(bnPool))
+	if k.Cmp(big.NewInt(0)) >=0 {
+		e.p.Mul(twistGen, k, new(bnPool))
+	} else {
+		e.p.Negative(e.p.Mul(twistGen, new(big.Int).Abs(k), new(bnPool)), new(bnPool))
+	}
+	//e.p.Mul(twistGen, k, new(bnPool))
 	return e
 }
 
@@ -196,7 +211,12 @@ func (e *G2) ScalarMult(a *G2, k *big.Int) *G2 {
 	if e.p == nil {
 		e.p = newTwistPoint(nil)
 	}
-	e.p.Mul(a.p, k, new(bnPool))
+	if k.Cmp(big.NewInt(0)) >=0 {
+		e.p.Mul(a.p, k, new(bnPool))
+	} else {
+		e.p.Negative(e.p.Mul(a.p, new(big.Int).Abs(k), new(bnPool)), new(bnPool))
+	}
+	//e.p.Mul(a.p, k, new(bnPool))
 	return e
 }
 
@@ -207,6 +227,15 @@ func (e *G2) Add(a, b *G2) *G2 {
 		e.p = newTwistPoint(nil)
 	}
 	e.p.Add(a.p, b.p, new(bnPool))
+	return e
+}
+
+// Neg sets e to -a and then returns e.
+func (e *G2) Neg(a *G2) *G2 {
+	if e.p == nil {
+		e.p = newTwistPoint(nil)
+	}
+	e.p.Negative(a.p, new(bnPool))
 	return e
 }
 
@@ -289,6 +318,44 @@ func (e *GT) ScalarMult(a *GT, k *big.Int) *GT {
 	return e
 }
 
+func (e *GT) Exp(a *GT, k *big.Int) *GT {
+	var returnValue *GT
+	if k.Cmp(big.NewInt(0)) >=0 {
+		returnValue = a.ScalarMult(a, k)
+	} else {
+		returnValue = a.Invert(a.ScalarMult(a, new(big.Int).Abs(k)))
+	}
+	return returnValue
+}
+
+func (e *GT) Invert(a *GT) *GT {
+	if e.p == nil {
+		e.p = newGFp12(nil)
+	}
+	e.p.Invert(a.p, new(bnPool))
+	return e
+}
+
+// IsZero returns true iff a = 0.
+func (e *G1) IsZero() bool {
+	return e.p.IsInfinity()
+}
+
+// IsZero returns true iff a = 0.
+func (e *G2) IsZero() bool {
+	return e.p.IsInfinity()
+}
+
+// IsZero returns true iff a = 0.
+func (e *GT) IsZero() bool {
+	return e.p.IsZero()
+}
+
+// IsOne returns true iff a = 0.
+func (e *GT) IsOne() bool {
+	return e.p.IsOne()
+}
+
 // Add sets e to a+b and then returns e.
 func (e *GT) Add(a, b *GT) *GT {
 	if e.p == nil {
@@ -306,6 +373,7 @@ func (e *GT) Neg(a *GT) *GT {
 	e.p.Invert(a.p, new(bnPool))
 	return e
 }
+
 
 // Marshal converts n into a byte slice.
 func (n *GT) Marshal() []byte {
