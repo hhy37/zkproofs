@@ -191,6 +191,13 @@ func (e *G2) CurvePoints() (*gfP2, *gfP2, *gfP2, *gfP2) {
 	return e.p.x, e.p.y, e.p.z, e.p.t
 }
 
+// Set to identity element on the group.
+func (e *G2) SetInfinity() *G2 {
+	e.p = newTwistPoint(new(bnPool))
+	e.p.SetInfinity()
+	return e
+}
+
 // ScalarBaseMult sets e to g*k where g is the generator of the group and
 // then returns out.
 func (e *G2) ScalarBaseMult(k *big.Int) *G2 {

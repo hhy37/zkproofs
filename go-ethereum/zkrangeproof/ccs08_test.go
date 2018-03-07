@@ -24,6 +24,12 @@ import (
 	"github.com/ing-bank/zkrangeproof/go-ethereum/crypto/bn256"
 )
 
+func TestDecompose(t *testing.T) {
+	h := GetBigInt("925")
+	decx, _ := Decompose(h, 10, 3)	
+	fmt.Println(decx)
+}
+
 func TestNegScalarBaseMulG1(t *testing.T) {
 	b, _ := rand.Int(rand.Reader, bn256.Order)
 	pb := new(bn256.G1).ScalarBaseMult(b)
@@ -79,9 +85,9 @@ func TestZKRP(t *testing.T) {
 	var (
 		r *big.Int
 	)
-	p, _ := Setup(new(big.Int).SetInt64(-4), new(big.Int).SetInt64(7))
+	p, _ := Setup(10, 5)
 	r, _ = rand.Int(rand.Reader, bn256.Order)
-	proof_out, _ := Prove(new(big.Int).SetInt64(3), r, p)
+	proof_out, _ := Prove(new(big.Int).SetInt64(42176), r, p)
 	result, _ := Verify(&proof_out, &p, p.kp.pubk)
 	fmt.Println("ZKRP result: ")
 	fmt.Println(result)
