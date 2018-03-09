@@ -81,14 +81,29 @@ func TestInvertGFp12(t *testing.T) {
 	fmt.Println(k3)
 }
 
+func TestZKRP_UL(t *testing.T) {
+	var (
+		r *big.Int
+	)
+	p, _ := SetupUL(10, 5)
+	r, _ = rand.Int(rand.Reader, bn256.Order)
+	proof_out, _ := ProveUL(new(big.Int).SetInt64(42176), r, p)
+	result, _ := VerifyUL(&proof_out, &p, p.kp.pubk)
+	fmt.Println("ZKRP UL result: ")
+	fmt.Println(result)
+	if result != true {
+		t.Errorf("Assert failure: expected true, actual: ", result)
+	}
+}
+
 func TestZKRP(t *testing.T) {
 	var (
 		r *big.Int
 	)
-	p, _ := Setup(10, 5)
+	p, _ := Setup(1900, 2000)
 	r, _ = rand.Int(rand.Reader, bn256.Order)
-	proof_out, _ := Prove(new(big.Int).SetInt64(42176), r, p)
-	result, _ := Verify(&proof_out, &p, p.kp.pubk)
+	proof_out, _ := Prove(new(big.Int).SetInt64(1983), r, *p)
+	result, _ := Verify(&proof_out, p, p.p.kp.pubk)
 	fmt.Println("ZKRP result: ")
 	fmt.Println(result)
 	if result != true {
