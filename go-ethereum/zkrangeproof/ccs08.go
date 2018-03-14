@@ -14,6 +14,12 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
+/*
+This file contains the implementation of the ZKRP scheme proposed in the paper:
+Efficient Protocols for Set Membership and Range Proofs
+Jan Camenisch, Rafik Chaabouni, abhi shelat
+*/
+
 package zkrangeproof
 
 import (
@@ -29,7 +35,7 @@ import (
 	"fmt"
 )
 
-//Constants that we are going to be used frequently, then we just need to compute them once.
+//Constants that are going to be used frequently, then we just need to compute them once.
 var (
 	G1 = new(bn256.G1).ScalarBaseMult(new(big.Int).SetInt64(1))
 	G2 = new(bn256.G2).ScalarBaseMult(new(big.Int).SetInt64(1))
@@ -43,13 +49,13 @@ This must be computed in a trusted setup.
 type paramsUL struct {
 	signatures map[string]*bn256.G2
 	H *bn256.G2
-	// must protect the private key
+	// TODO:must protect the private key
 	kp keypair
 	u,l int64
 }
 
 /*
-proof contains the necessary elements for the ZK proof.
+proofUL contains the necessary elements for the ZK proof.
 */
 type proofUL struct {
 	V []*bn256.G2
@@ -118,13 +124,11 @@ func SetupUL(u, l int64) (paramsUL, error) {
 	p.kp, _ = keygen()
 
 	p.signatures = make(map[string]*bn256.G2)
-	i = 0
-	for i < u {
+	for i=0; i < u; i++ {
 		sig_i, _ := sign(new(big.Int).SetInt64(i), p.kp.privk)
 		p.signatures[strconv.FormatInt(i, 10)] = sig_i 
-		i = i + 1
 	}
-	//TODO: protect the master key
+	//TODO: protect the 'master' key
 	h := GetBigInt("18560948149108576432482904553159745978835170526553990798435819795989606410925")
 	p.H = new(bn256.G2).ScalarBaseMult(h)
 	p.u = u
@@ -139,12 +143,11 @@ func ProveUL(x,r *big.Int, p paramsUL) (proofUL, error) {
 	var (
 		i int64
 		v []*big.Int
-		A *bn256.G2
 		proof_out proofUL
 	)
 	decx, _ := Decompose(x, p.u, p.l)	
-	fmt.Println(decx)
 
+	// Initialize variables
 	v = make([]*big.Int, p.l, p.l)
 	proof_out.V  = make([]*bn256.G2, p.l, p.l)
 	proof_out.a  = make([]*bn256.GT, p.l, p.l)
@@ -155,32 +158,36 @@ func ProveUL(x,r *big.Int, p paramsUL) (proofUL, error) {
 	proof_out.D = new(bn256.G2) 
 	proof_out.D.SetInfinity()
 	proof_out.m, _ = rand.Int(rand.Reader, bn256.Order)
+	
+	// D = H^m
 	D := new(bn256.G2).ScalarMult(p.H, proof_out.m)
 	for i = 0; i< p.l; i++ {
 		v[i], _ = rand.Int(rand.Reader, bn256.Order)
-		//TODO: must verify if x belongs to p.signatures
-		A = p.signatures[strconv.FormatInt(decx[i], 10)]
-		proof_out.V[i] = new(bn256.G2).ScalarMult(A, v[i])
-		proof_out.s[i], _ = rand.Int(rand.Reader, bn256.Order)
-		proof_out.t[i], _ = rand.Int(rand.Reader, bn256.Order)
-		proof_out.a[i] = bn256.Pair(G1, proof_out.V[i])
-		proof_out.a[i].ScalarMult(proof_out.a[i], proof_out.s[i])
-		proof_out.a[i].Invert(proof_out.a[i])
-		proof_out.a[i].Add(proof_out.a[i], new(bn256.GT).ScalarMult(E, proof_out.t[i]))
-	
+		A, ok := p.signatures[strconv.FormatInt(decx[i], 10)]
+		if ok {
+			proof_out.V[i] = new(bn256.G2).ScalarMult(A, v[i])
+			proof_out.s[i], _ = rand.Int(rand.Reader, bn256.Order)
+			proof_out.t[i], _ = rand.Int(rand.Reader, bn256.Order)
+			proof_out.a[i] = bn256.Pair(G1, proof_out.V[i])
+			proof_out.a[i].ScalarMult(proof_out.a[i], proof_out.s[i])
+			proof_out.a[i].Invert(proof_out.a[i])
+			proof_out.a[i].Add(proof_out.a[i], new(bn256.GT).ScalarMult(E, proof_out.t[i]))
+		
 
-		ui := new(big.Int).Exp(new(big.Int).SetInt64(p.u), new(big.Int).SetInt64(i), nil)
-		muisi := new(big.Int).Mul(proof_out.s[i], ui)
-		muisi = Mod(muisi, bn256.Order)
-		aux := new(bn256.G2).ScalarBaseMult(muisi)
-		D.Add(D, aux)
+			ui := new(big.Int).Exp(new(big.Int).SetInt64(p.u), new(big.Int).SetInt64(i), nil)
+			muisi := new(big.Int).Mul(proof_out.s[i], ui)
+			muisi = Mod(muisi, bn256.Order)
+			aux := new(bn256.G2).ScalarBaseMult(muisi)
+			D.Add(D, aux)
+		} else {
+			return proof_out, errors.New("Could not generate proof. Element does not belong to the interval.")
+		}
 	}	
 	proof_out.D.Add(proof_out.D, D)
 	
 	proof_out.C, _ = Commit(x, r, p)
 	proof_out.c, _ = Hash(proof_out.a, proof_out.D)
 	proof_out.c = Mod(proof_out.c, bn256.Order)
-	//proof_out.c = new(big.Int).SetInt64(0)
 
 	proof_out.zr = Sub(proof_out.m, Multiply(r, proof_out.c))
 	proof_out.zr = Mod(proof_out.zr, bn256.Order)
@@ -271,7 +278,12 @@ func Setup(a,b int64) (*params, error) {
 		u = b / int64(logb)
 		if u != 0 {
 			l = (b / u) + 1 
-			params_out, e := SetupUL(u, l)
+			fmt.Println("u,l")
+			fmt.Println(u)
+			fmt.Println(l)
+			// TODO: understand how to find optimal parameters
+			//params_out, e := SetupUL(u, l)
+			params_out, e := SetupUL(1000, 4) // 10^15, 10
 			p.p = &params_out
 			p.a = a
 			p.b = b

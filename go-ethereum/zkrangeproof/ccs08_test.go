@@ -99,11 +99,15 @@ func TestZKRP_UL(t *testing.T) {
 func TestZKRP(t *testing.T) {
 	var (
 		r *big.Int
+		result bool
 	)
-	p, _ := Setup(1900, 2000)
+	p, _ := Setup(1900000000000, 2000000000000)
 	r, _ = rand.Int(rand.Reader, bn256.Order)
-	proof_out, _ := Prove(new(big.Int).SetInt64(1983), r, *p)
-	result, _ := Verify(&proof_out, p, p.p.kp.pubk)
+	proof_out, e := Prove(new(big.Int).SetInt64(1983000000000), r, *p)
+	if e != nil {
+		fmt.Println(e.Error())
+	} 
+	result, _ = Verify(&proof_out, p, p.p.kp.pubk)
 	fmt.Println("ZKRP result: ")
 	fmt.Println(result)
 	if result != true {
