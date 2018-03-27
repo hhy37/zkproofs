@@ -1,4 +1,4 @@
-// Copyright 2017 ING Bank N.V.
+// Copyright 2018 ING Bank N.V.
 // This file is part of the go-ethereum library.
 //
 // The go-ethereum library is free software: you can redistribute it and/or modify
@@ -32,7 +32,6 @@ import (
 	"crypto/rand"
 	"github.com/ing-bank/zkrangeproof/go-ethereum/crypto/bn256"
 	"github.com/ing-bank/zkrangeproof/go-ethereum/byteconversion"
-	"fmt"
 )
 
 //Constants that are going to be used frequently, then we just need to compute them once.
@@ -51,6 +50,9 @@ type paramsUL struct {
 	H *bn256.G2
 	// TODO:must protect the private key
 	kp keypair
+	// u determines the amount of signature we need in the public params
+	// l determines how many pairings we need to compute, then in order to improve
+	// the verifiers performance we want to minize it.
 	u,l int64
 }
 
@@ -172,7 +174,6 @@ func ProveUL(x,r *big.Int, p paramsUL) (proofUL, error) {
 			proof_out.a[i].ScalarMult(proof_out.a[i], proof_out.s[i])
 			proof_out.a[i].Invert(proof_out.a[i])
 			proof_out.a[i].Add(proof_out.a[i], new(bn256.GT).ScalarMult(E, proof_out.t[i]))
-		
 
 			ui := new(big.Int).Exp(new(big.Int).SetInt64(p.u), new(big.Int).SetInt64(i), nil)
 			muisi := new(big.Int).Mul(proof_out.s[i], ui)
@@ -226,7 +227,7 @@ func VerifyUL(proof_out *proofUL, p *paramsUL, pubk *bn256.G1) (bool, error) {
 	r1 = bytes.Equal(DBytes, pDBytes)
 
 	r2 = true
-	for i = 0; i< p.l; i++ {
+	for i = 0; i < p.l; i++ {
 		// a == [e(V,y)^c].[e(V,g)^-zsig].[e(g,g)^zv]
 		// TODO: avoid using many variables
 		p1 = bn256.Pair(pubk, proof_out.V[i])
@@ -275,15 +276,19 @@ func Setup(a,b int64) (*params, error) {
 	p = new(params)
 	logb = math.Log(float64(b))
 	if logb != 0 {
-		u = b / int64(logb)
+		//u = b / int64(logb)
+		u = 1000
 		if u != 0 {
-			l = (b / u) + 1 
-			fmt.Println("u,l")
-			fmt.Println(u)
-			fmt.Println(l)
+			l = 0
+			for i:=b; i>0; i=i/u {
+				l=l+1
+			}
+			//fmt.Println("u,l")
+			//fmt.Println(u)
+			//fmt.Println(l)
 			// TODO: understand how to find optimal parameters
 			//params_out, e := SetupUL(u, l)
-			params_out, e := SetupUL(1000, 4) // 10^15, 10
+			params_out, e := SetupUL(100, 1) // 10^15, 10
 			p.p = &params_out
 			p.a = a
 			p.b = b

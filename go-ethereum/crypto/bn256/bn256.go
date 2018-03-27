@@ -343,6 +343,11 @@ func (e *GT) Invert(a *GT) *GT {
 	return e
 }
 
+// SetZero returns true iff a = 0.
+func (e *G1) SetZero()  {
+	e.p.SetInfinity()
+}
+
 // IsZero returns true iff a = 0.
 func (e *G1) IsZero() bool {
 	return e.p.IsInfinity()

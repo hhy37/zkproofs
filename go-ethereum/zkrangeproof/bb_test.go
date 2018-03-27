@@ -19,16 +19,14 @@ package zkrangeproof
 import (
 	"testing"
 	"math/big"
-	"fmt"
 )
 
 func TestKeyGen(t *testing.T) {
 	kp, _ := keygen()
-	fmt.Println(kp.privk)
-	fmt.Println(kp.pubk)
 	signature, _ := sign(big.NewInt(42), kp.privk)	
-	fmt.Println(signature)
 	res, _ := verify(signature, big.NewInt(42), kp.pubk)
-	fmt.Println(res)
+	if res != true {
+		t.Errorf("Assert failure: expected true, actual: ", res)
+	}
 }
 
