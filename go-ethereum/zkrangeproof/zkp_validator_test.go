@@ -33,10 +33,10 @@ func TestCalculateHash(t * testing.T) {
 	actualResult2, _ := CalculateHash(a, b)
 
 	if expectedResult.Cmp(actualResult) != 0 {
-		t.Errorf("Assert failure: hashed is: ", actualResult)
+		t.Errorf("Assert failure: hashed is: %s", actualResult)
 	}
 	if expectedResult.Cmp(actualResult2) != 0 {
-		t.Errorf("Assert failure: hashed 2 is: ", actualResult2)
+		t.Errorf("Assert failure: hashed 2 is: %s", actualResult2)
 	}
 }
 
@@ -49,7 +49,7 @@ func TestModPow1(t *testing.T) {
 	result := ModPow(base, exponent, modulo)
 
 	if result.Cmp(big.NewInt(6)) != 0 {
-		t.Errorf("Assert failure: expected 6, actual: ", result)
+		t.Errorf("Assert failure: expected 6, actual: %s", result)
 	}
 }
 
@@ -62,7 +62,7 @@ func TestModPow2(t *testing.T) {
 	var result = ModPow(base, exponent, modulo)
 
 	if result.Cmp(big.NewInt(4)) != 0 {
-		t.Errorf("Assert failure: expected 4, actual: ", result)
+		t.Errorf("Assert failure: expected 4, actual: %s", result)
 	}
 }
 
@@ -71,7 +71,7 @@ func TestModPowNegativeExp1(t *testing.T) {
 	result := ModPow(big.NewInt(16), big.NewInt(-1), big.NewInt(7))
 
 	if result.Cmp(big.NewInt(4)) != 0 {
-		t.Errorf("Assert failure: expected 4, actual: ", result)
+		t.Errorf("Assert failure: expected 4, actual: %s", result)
 	}
 }
 
@@ -80,7 +80,7 @@ func TestModPowNegativeExp2(t *testing.T) {
 	result := ModPow(big.NewInt(34), big.NewInt(-2), big.NewInt(9))
 
 	if result.Cmp(big.NewInt(7)) != 0 {
-		t.Errorf("Assert failure: expected 7, actual: ", result)
+		t.Errorf("Assert failure: expected 7, actual: %s", result)
 	}
 }
 
@@ -92,7 +92,7 @@ func TestModInverse1(t *testing.T) {
 	var result = ModInverse(base, modulo)
 
 	if result.Cmp(big.NewInt(0)) != 0 {
-		t.Errorf("Assert failure: expected 0, actual: ", result)
+		t.Errorf("Assert failure: expected 0, actual: %s", result)
 	}
 }
 
@@ -104,7 +104,7 @@ func TestModInverse2(t *testing.T) {
 	var result = ModInverse(base, modulo)
 
 	if result.Cmp(big.NewInt(5)) != 0 {
-		t.Errorf("Assert failure: expected 5, actual: ", result)
+		t.Errorf("Assert failure: expected 5, actual: %s", result)
 	}
 }
 
@@ -115,7 +115,7 @@ func TestMultiply(t *testing.T) {
 
 	var result = Multiply(factor1, factor2)
 	if result.Cmp(big.NewInt(21)) != 0 {
-		t.Errorf("Assert failure: expected 21, actual: ", result)
+		t.Errorf("Assert failure: expected 21, actual: %s", result)
 	}
 }
 
@@ -124,7 +124,7 @@ func TestMod(t *testing.T) {
 	result := Mod(big.NewInt(16), big.NewInt(7))
 
 	if result.Cmp(big.NewInt(2)) != 0 {
-		t.Errorf("Assert failure: expected 2, actual: ", result)
+		t.Errorf("Assert failure: expected 2, actual: %s", result)
 	}
 }
 
