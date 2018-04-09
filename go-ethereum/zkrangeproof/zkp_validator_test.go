@@ -237,9 +237,3 @@ func TestInvalidRangeProofs(t *testing.T) {
 	}
 }
 
-func GetBigInt(value string) *big.Int {
-
-	i := new(big.Int)
-	i.SetString(value, 10)
-	return i
-}
