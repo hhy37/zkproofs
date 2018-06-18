@@ -26,8 +26,7 @@ func TestKeyGen(t *testing.T) {
 	signature, _ := sign(big.NewInt(42), kp.privk)	
 	res, _ := verify(signature, big.NewInt(42), kp.pubk)
 	if res != true {
-		t.Errorf("Assert failure: expected true, actual: %t", res)
-		t.Fail()
+		t.Errorf("Assert failure: expected true, actual: ", res)
 	}
 }
 
