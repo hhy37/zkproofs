@@ -69,7 +69,6 @@ func (e *G1) ScalarBaseMult(k *big.Int) *G1 {
 	} else {
 		e.p.Negative(e.p.Mul(curveGen, new(big.Int).Abs(k), new(bnPool)))
 	}
-	//e.p.Mul(curveGen, k, new(bnPool))
 	return e
 }
 
@@ -83,7 +82,6 @@ func (e *G1) ScalarMult(a *G1, k *big.Int) *G1 {
 	} else {
 		e.p.Negative(e.p.Mul(a.p, new(big.Int).Abs(k), new(bnPool)))
 	}
-	//e.p.Mul(a.p, k, new(bnPool))
 	return e
 }
 
@@ -209,7 +207,6 @@ func (e *G2) ScalarBaseMult(k *big.Int) *G2 {
 	} else {
 		e.p.Negative(e.p.Mul(twistGen, new(big.Int).Abs(k), new(bnPool)), new(bnPool))
 	}
-	//e.p.Mul(twistGen, k, new(bnPool))
 	return e
 }
 
@@ -223,7 +220,6 @@ func (e *G2) ScalarMult(a *G2, k *big.Int) *G2 {
 	} else {
 		e.p.Negative(e.p.Mul(a.p, new(big.Int).Abs(k), new(bnPool)), new(bnPool))
 	}
-	//e.p.Mul(a.p, k, new(bnPool))
 	return e
 }
 

@@ -28,6 +28,9 @@ type keypair struct {
 	privk *big.Int
 }
 
+/*
+keygen is responsible for the key generation. 
+*/
 func keygen() (keypair, error) {
 	var (
 		kp keypair
@@ -45,6 +48,9 @@ func keygen() (keypair, error) {
 	return kp, e
 }
 
+/*
+sign receives as input a message and a private key and outputs a digital signature. 
+*/
 func sign(m *big.Int, privk *big.Int) (*bn256.G2, error) {
 	var (
 		res bool
@@ -59,6 +65,10 @@ func sign(m *big.Int, privk *big.Int) (*bn256.G2, error) {
 	}
 }
 
+/*
+verify receives as input the digital signature, the message and the public key. It outputs
+true if and only if the signature is valid. 
+*/
 func verify(signature *bn256.G2, m *big.Int, pubk *bn256.G1) (bool, error) {
 	// e(y.g^m, sig) = e(g1,g2)
 	var (
