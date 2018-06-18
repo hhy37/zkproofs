@@ -59,7 +59,8 @@ func (e *G1) CurvePoints() (*big.Int, *big.Int, *big.Int, *big.Int) {
 }
 
 // ScalarBaseMult sets e to g*k where g is the generator of the group and
-// then returns e.
+// then returns e. 
+// This method was updated to deal with negative numbers.
 func (e *G1) ScalarBaseMult(k *big.Int) *G1 {
 	if e.p == nil {
 		e.p = newCurvePoint(nil)
@@ -73,6 +74,7 @@ func (e *G1) ScalarBaseMult(k *big.Int) *G1 {
 }
 
 // ScalarMult sets e to a*k and then returns e.
+// This method was updated to deal with negative numbers.
 func (e *G1) ScalarMult(a *G1, k *big.Int) *G1 {
 	if e.p == nil {
 		e.p = newCurvePoint(nil)
@@ -198,6 +200,7 @@ func (e *G2) SetInfinity() *G2 {
 
 // ScalarBaseMult sets e to g*k where g is the generator of the group and
 // then returns out.
+// This method was updated to deal with negative numbers.
 func (e *G2) ScalarBaseMult(k *big.Int) *G2 {
 	if e.p == nil {
 		e.p = newTwistPoint(nil)
@@ -211,6 +214,7 @@ func (e *G2) ScalarBaseMult(k *big.Int) *G2 {
 }
 
 // ScalarMult sets e to a*k and then returns e.
+// This method was updated to deal with negative numbers.
 func (e *G2) ScalarMult(a *G2, k *big.Int) *G2 {
 	if e.p == nil {
 		e.p = newTwistPoint(nil)
