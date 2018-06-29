@@ -58,6 +58,13 @@ func (e *G1) CurvePoints() (*big.Int, *big.Int, *big.Int, *big.Int) {
 	return e.p.x, e.p.y, e.p.z, e.p.t
 }
 
+// Set to identity element on the group.
+func (e *G1) SetInfinity() *G1 {
+	e.p = newCurvePoint(new(bnPool))
+	e.p.SetInfinity()
+	return e
+}
+
 // ScalarBaseMult sets e to g*k where g is the generator of the group and
 // then returns e. 
 // This method was updated to deal with negative numbers.
@@ -65,8 +72,13 @@ func (e *G1) ScalarBaseMult(k *big.Int) *G1 {
 	if e.p == nil {
 		e.p = newCurvePoint(nil)
 	}
-	if k.Cmp(big.NewInt(0)) >=0 {
-		e.p.Mul(curveGen, k, new(bnPool))
+	cmp := k.Cmp(big.NewInt(0))
+	if cmp >=0 {
+		if cmp == 0 {
+			e.p.SetInfinity()
+		} else {
+			e.p.Mul(curveGen, k, new(bnPool))
+		}
 	} else {
 		e.p.Negative(e.p.Mul(curveGen, new(big.Int).Abs(k), new(bnPool)))
 	}
@@ -79,8 +91,13 @@ func (e *G1) ScalarMult(a *G1, k *big.Int) *G1 {
 	if e.p == nil {
 		e.p = newCurvePoint(nil)
 	}
-	if k.Cmp(big.NewInt(0)) >=0 {
-		e.p.Mul(a.p, k, new(bnPool))
+	cmp := k.Cmp(big.NewInt(0))
+	if cmp >=0 {
+		if cmp == 0 {
+			e.p.SetInfinity()
+		} else {
+			e.p.Mul(a.p, k, new(bnPool))
+		}
 	} else {
 		e.p.Negative(e.p.Mul(a.p, new(big.Int).Abs(k), new(bnPool)))
 	}

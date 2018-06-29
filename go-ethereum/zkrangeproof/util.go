@@ -18,10 +18,16 @@ package zkrangeproof
 
 import (
 	"math/big"
-	"errors"
 	"crypto/sha256"
 	"github.com/ing-bank/zkrangeproof/go-ethereum/byteconversion"
 	"github.com/ing-bank/zkrangeproof/go-ethereum/crypto/bn256"
+)
+
+//Constants that are going to be used frequently, then we just need to compute them once.
+var (
+	G1 = new(bn256.G1).ScalarBaseMult(new(big.Int).SetInt64(1))
+	G2 = new(bn256.G2).ScalarBaseMult(new(big.Int).SetInt64(1))
+	E = bn256.Pair(G1, G2)
 )
 
 /* 
@@ -43,49 +49,29 @@ func Decompose(x *big.Int, u int64, l int64) ([]int64, error) {
 	return result, nil
 }
 
-func InvertBits(x []int64) ([]int64, error) {
-	var (
-		i int64
-		result []int64
-	)
-	result = make([]int64, len(x))
-	i = 0
-	for i<int64(len(x)) {
-		if x[i] == 0 {
-			result[i] = 1 
-		} else if x[i] == 1 {
-			result[i] = 0 
-		} else {
-			return nil, errors.New("input contains non-binary element") 
-		}
-		i = i + 1
-	}
-	return result, nil
-}
-
-/*
-CommitSet method corresponds to the Pedersen commitment scheme. Namely, given input 
-message x, and randomness r, it outputs g^x.h^r.
-*/
-func CommitSet(x,r *big.Int, p paramsSet) (*bn256.G2, error) {
-	var (
-		C *bn256.G2
-	)
-	C = new(bn256.G2).ScalarBaseMult(x)
-	C.Add(C, new(bn256.G2).ScalarMult(p.H, r))
-	return C, nil
-}
-
 /*
 Commit method corresponds to the Pedersen commitment scheme. Namely, given input 
 message x, and randomness r, it outputs g^x.h^r.
 */
-func Commit(x,r *big.Int, p paramsUL) (*bn256.G2, error) {
+func Commit(x,r *big.Int, h *bn256.G2) (*bn256.G2, error) {
 	var (
 		C *bn256.G2
 	)
 	C = new(bn256.G2).ScalarBaseMult(x)
-	C.Add(C, new(bn256.G2).ScalarMult(p.H, r))
+	C.Add(C, new(bn256.G2).ScalarMult(h, r))
+	return C, nil
+}
+
+/*
+CommitG1 method corresponds to the Pedersen commitment scheme. Namely, given input 
+message x, and randomness r, it outputs g^x.h^r.
+*/
+func CommitG1(x,r *big.Int, h *bn256.G1) (*bn256.G1, error) {
+	var (
+		C *bn256.G1
+	)
+	C = new(bn256.G1).ScalarBaseMult(x)
+	C.Add(C, new(bn256.G1).ScalarMult(h, r))
 	return C, nil
 }
 
