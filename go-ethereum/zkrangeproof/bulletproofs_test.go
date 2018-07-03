@@ -146,8 +146,43 @@ func TestBulletproofsZKRP(t *testing.T) {
 		zkrp bp
 	)
 	zkrp.Setup(0,65536) // ITS BEING USED TO COMPUTE N 
-	zkrp.x = new(big.Int).SetInt64(123)
-	proof, _ := zkrp.Prove()
+	x := new(big.Int).SetInt64(123)
+	proof, _ := zkrp.Prove(x)
 	ok, _ := zkrp.Verify(proof)
+	fmt.Println(ok)
+}
+
+/* 
+Test Inner Product argument.
+*/
+func TestInnerProduct(t *testing.T) {
+	var (
+		zkrp bp
+		zkip bip
+		a []*big.Int
+		b []*big.Int
+	)
+	zkrp.Setup(0,2) // ITS BEING USED TO COMPUTE N 
+	//zkrp.x = new(big.Int).SetInt64(123)
+	//proof, _ := zkrp.Prove()
+	//ok, _ := zkrp.Verify(proof)
+	//fmt.Println(ok)
+	fmt.Println("n:")
+	fmt.Println(zkrp.n)
+	a = make([]*big.Int, 1)
+	a[0] = new(big.Int).SetInt64(1)
+	b = make([]*big.Int, 1)
+	b[0] = new(big.Int).SetInt64(1)
+	c := new(big.Int).SetInt64(1)
+	fmt.Println("g:")
+	fmt.Println(zkrp.g)
+	fmt.Println("h:")
+	fmt.Println(zkrp.h)
+	commit, _ := CommitInnerProduct(zkrp.g, zkrp.h, a, b)
+	fmt.Println("commit:") 
+	fmt.Println(commit)
+	zkip.Setup(zkrp.H, zkrp.g, zkrp.h, c)
+	proof, _ := zkip.Prove(a, b, commit)	
+	ok, _ := zkip.Verify(proof)
 	fmt.Println(ok)
 }

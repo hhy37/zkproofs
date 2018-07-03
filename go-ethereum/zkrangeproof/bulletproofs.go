@@ -39,7 +39,6 @@ Bulletproofs parameters.
 */
 type bp struct {
 	n int64
-	x *big.Int
 	G *bn256.G1
 	H *bn256.G1
 	g []*bn256.G1  
@@ -406,7 +405,6 @@ func (zkrp *bp) Setup(a,b int64) {
 	zkrp.G = new(bn256.G1).ScalarBaseMult(new(big.Int).SetInt64(1))
 	h := GetBigInt("18560948149108576432482904553159745978835170526553990798435819795989606410926")
 	zkrp.H = new(bn256.G1).ScalarBaseMult(h)
-	fmt.Println(zkrp.H.IsZero())
 	zkrp.n = int64(math.Log2(float64(b)))
 	zkrp.g = make([]*bn256.G1, zkrp.n)
 	zkrp.h = make([]*bn256.G1, zkrp.n)
@@ -423,7 +421,7 @@ func (zkrp *bp) Setup(a,b int64) {
 /* 
 Prove computes the ZK proof. 
 */
-func (zkrp *bp) Prove() (proofBP, error) {
+func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
 	var (
 		i int64
 		sL []*big.Int
@@ -437,10 +435,10 @@ func (zkrp *bp) Prove() (proofBP, error) {
 	
 	// commitment to v and gamma
 	gamma, _ := rand.Int(rand.Reader, bn256.Order)
-	V, _ := CommitG1(zkrp.x, gamma, zkrp.H) 
+	V, _ := CommitG1(secret, gamma, zkrp.H) 
 
 	// aL, aR and commitment: (A, alpha)
-	aL, _ := Decompose(zkrp.x, 2, zkrp.n)	
+	aL, _ := Decompose(secret, 2, zkrp.n)	
 	aR, _ := ComputeAR(aL)
 	fmt.Println("aL:")
 	fmt.Println(aL)
@@ -698,6 +696,236 @@ func (zkrp *bp) Verify (proof proofBP) (bool, error) {
 	fmt.Println("########## result:")
 	fmt.Println(result)
 
-	return true, nil
+	return result, nil
 }
+
+////////////////////////////// Inner Product //////////////////////////////
+
+type bip struct {
+	n int64
+	c *big.Int
+	u *bn256.G1
+	H *bn256.G1
+	g []*bn256.G1  
+	h []*bn256.G1  
+}
+
+type proofBip struct {
+	u *bn256.G1
+	P *bn256.G1
+	g *bn256.G1
+	h *bn256.G1
+	a *big.Int
+	b *big.Int
+}
+
+/*
+Hash is responsible for the computing a Zp element given elements from GT and G1.
+*/
+func HashIP(g,h []*bn256.G1, P *bn256.G1, c *big.Int, n int64) (*big.Int, error) {
+	var (
+		i int64
+	)
+
+	digest := sha256.New()
+	digest.Write([]byte(P.String()))
+	
+	i = 0
+	for i<n {
+		digest.Write([]byte(g[i].String()))
+		digest.Write([]byte(h[i].String()))
+		i = i + 1
+	}
+	
+	digest.Write([]byte(c.String()))
+	output := digest.Sum(nil)
+	tmp := output[0: len(output)]
+	result, err := byteconversion.FromByteArray(tmp)
+	
+	return result, err
+}
+
+/*
+CommitinnerProduct is responsible for calculating g^a.h^b.
+*/
+func CommitInnerProduct(g,h []*bn256.G1, a,b []*big.Int) (*bn256.G1, error) {
+	var (
+		result *bn256.G1
+	)
+
+	ga, _ := VectorExp(g, a)
+	hb, _ := VectorExp(h, b)
+	result = new(bn256.G1).Add(ga, hb)
+	return result, nil
+}
+
+/*
+SetupInnerProduct is responsible for computing the basic parameters that are common to both
+Prove and Verify algorithms.
+*/
+func (zkip *bip) Setup(H *bn256.G1, g,h []*bn256.G1, c *big.Int) (bip, error) {
+	var (
+		params bip
+	)
+	
+	zkip.g = make([]*bn256.G1, zkip.n)
+	zkip.h = make([]*bn256.G1, zkip.n)
+	ur := GetBigInt("18560948149108576432482904553159745978835170526553990798435819795989606410927")
+	zkip.u = new(bn256.G1).ScalarBaseMult(ur)
+	zkip.H = H
+	zkip.g = g
+	zkip.h = h
+	zkip.c = c
+
+	return params, nil
+}
+
+
+/*
+InnerProductProve is responsible for the generation of the Inner Product Proof.
+*/
+func (zkip *bip) Prove(a,b []*big.Int, P *bn256.G1) (proofBip, error) {
+	var (
+		proof proofBip
+		n,m int64
+	)
+
+	// Fiat-Shamir:
+	// x = Hash(g,h,P,c)
+	x, _ := HashIP(zkip.g, zkip.h, P, zkip.c, zkip.n)
+	fmt.Println("Inner Product x:")
+	fmt.Println(x)	
+	fmt.Println("c:")
+	fmt.Println(zkip.c)	
+	fmt.Println("u:")
+	fmt.Println(zkip.u)	
+	// Pprime = P.u^(x.c)		
+	ux := new(bn256.G1).ScalarMult(zkip.u, x)  
+	uxc := new(bn256.G1).ScalarMult(ux, zkip.c)  
+	P = new(bn256.G1).Add(P, uxc)
+	fmt.Println("P.u^(x.c):")
+	fmt.Println(P)	
+	n = int64(len(a))
+	m = int64(len(b))
+	if (n != m) {
+		return proof, errors.New("Size of first array argument must be equal to the second")
+	} else {
+		// Execute Protocol 2 recursively
+		proof, err := BIP(a, b, zkip.g, zkip.h, ux, P, n)
+		return proof, err
+	}
+		
+	return proof, nil
+}
+
+/*
+BIP is the main recursive function that will be used to compute the inner product argument.
+*/
+func BIP(a,b []*big.Int, g,h []*bn256.G1, u,P *bn256.G1, n int64) (proofBip, error) {
+	var (
+		proof proofBip
+	)
+
+	fmt.Println("u:")
+	fmt.Println(u)
+	if (n == 1) {
+		fmt.Println("g:")
+		fmt.Println(g)
+		fmt.Println("h:")
+		fmt.Println(h)
+		// recursion end
+		proof.a = a[0]
+		proof.b = b[0]
+		proof.g = g[0]
+		proof.h = h[0]
+		proof.P = P
+		proof.u = u
+
+	} else {
+		// recursion
+
+		// nprime := n / 2
+		//nprime := Div(n, new(big.Int).SetInt64(2))
+		//fmt.Println("nprime:")
+		//fmt.Println(nprime)
+
+		// Compute cL = < a[:n'], b[n':] >
+		// Compute cR = < a[n':], b[:n'] >
+		// Compute L = g[n':]^(a[:n']).h[:n']^(b[n':])
+		// Compute R = g[:n']^(a[n':]).h[n':]^(b[:n'])
+
+		// Fiat-Shamir:
+		// x = Hash(L, R)
+
+		// Compute g' = g[:n']^(x^-1) * g[n':]^(x)
+		// Compute h' = h[:n']^(x)    * h[n':]^(x^-1)
+		// Compute P' = L^(x^2).P.R^(x^-2)
+
+		// Compute a' = a[:n'].x      + a[n':].x^(-1)
+		// Compute b' = b[:n'].x^(-1) + b[n':].x
+
+		// recursion BIP(g',h',u,P'; a', b')
+
+	}
+	
+	return proof, nil
+}
+
+/* 
+InnerProduct is responsible for the verification of the Inner Product Proof. 
+*/
+func (zkip *bip) Verify(proof proofBip) (bool, error) {
+	
+	// c == a*b
+	ab := Multiply(proof.a, proof.b)
+	cmp := zkip.c.Cmp(ab)
+	c1 := (cmp == 0)
+	fmt.Println("c1:")
+	fmt.Println(c1)
+
+	// P == g^a.h^b.u^c
+	rhs := new(bn256.G1).ScalarMult(proof.g, proof.a)
+	fmt.Println("rhs:")
+	fmt.Println(rhs)
+	fmt.Println("H:")
+	fmt.Println(zkip.H)
+	fmt.Println("b:")
+	fmt.Println(proof.b)
+	rhs.Add(rhs, new(bn256.G1).ScalarMult(proof.h, proof.b))
+	rhs.Add(rhs, new(bn256.G1).ScalarMult(proof.u, zkip.c))
+
+	nP := proof.P.Neg(proof.P)
+	nP.Add(nP, rhs)
+	c2 := nP.IsZero() 
+	fmt.Println("########### Is infinity:")
+	fmt.Println(c2)
+
+	
+	return c1 && c2, nil
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
