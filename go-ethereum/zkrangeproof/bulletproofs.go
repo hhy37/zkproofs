@@ -31,7 +31,6 @@ import (
 	"crypto/sha256"
 	"github.com/ing-bank/zkrangeproof/go-ethereum/byteconversion"
 	"errors"
-	"fmt"
 )
 
 /*
@@ -467,7 +466,6 @@ func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
 		sR []*big.Int
 		proof proofBP
 	)
-	fmt.Println("############################# Prove #################################")
 	//////////////////////////////////////////////////////////////////////////////
 	// First phase
 	//////////////////////////////////////////////////////////////////////////////
@@ -479,10 +477,6 @@ func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
 	// aL, aR and commitment: (A, alpha)
 	aL, _ := Decompose(secret, 2, zkrp.n)	
 	aR, _ := ComputeAR(aL)
-	fmt.Println("aL:")
-	fmt.Println(aL)
-	fmt.Println("aR:")
-	fmt.Println(aR)
 	alpha, _ := rand.Int(rand.Reader, bn256.Order)
 	A, _ := CommitVector(aL, aR, alpha, zkrp.G, zkrp.H, zkrp.g, zkrp.h, zkrp.n) 
 
@@ -605,7 +599,6 @@ func (zkrp *bp) Verify (proof proofBP) (bool, error) {
 		i int64
 		hprime []*bn256.G1
 	)
-	fmt.Println("############################# Verify #################################")
 	hprime = make([]*bn256.G1, zkrp.n)
 	y, z, _ := HashBP(proof.A, proof.S)
 	x, _, _ := HashBP(proof.T1, proof.T2)
@@ -652,8 +645,6 @@ func (zkrp *bp) Verify (proof proofBP) (bool, error) {
 	lhs = lhs.Neg(lhs)
 	rhs.Add(rhs, lhs)
 	c65 := rhs.IsZero() // Condition (65), page 20, from eprint version
-	fmt.Println("########### Is infinity:")
-	fmt.Println(c65)
 
 	//////////////////////////////////////////////////////////////////////////////
 	// Check that l,r are correct -------------------  Conditions (66) and (67) //
@@ -690,8 +681,6 @@ func (zkrp *bp) Verify (proof proofBP) (bool, error) {
 	hprimeexp, _ := VectorExp(hprime, zynz22n)
 
 	lP.Add(lP, hprimeexp)
-	fmt.Println("lP:")
-	fmt.Println(lP)
 
 	// Compute P - rhs  #################### Condition (67) ######################
 
@@ -706,34 +695,24 @@ func (zkrp *bp) Verify (proof proofBP) (bool, error) {
 
 	rP.Add(rP, gpl)
 	rP.Add(rP, hprimepr)
-	fmt.Println("rP:")
-	fmt.Println(rP)
 
 	// Subtract lhs and rhs and compare with poitn at infinity
 	lP = lP.Neg(lP)
 	rP.Add(rP, lP)
 	c67 := rP.IsZero() // Condition (65), page 20, from eprint version
-	fmt.Println("########### Is infinity:")
-	fmt.Println(c67)
 
 	//////////////////////////////////////////////////////////////////////////////
 	// Check that l,r are correct -------------------  Conditions (66) and (67) //
 	//////////////////////////////////////////////////////////////////////////////
 
 	sp, _ := ScalarProduct(proof.bl, proof.br)
-	fmt.Println(sp)
-	fmt.Println(proof.tprime)
 	c68 := sp.Cmp(proof.tprime) == 0
-	fmt.Println("########## Scalar product valid:")
-	fmt.Println(c68)
 	
 	//////////////////////////////////////////////////////////////////////////////
 	// Check that (65) (67) (68) are TRUE                                       //
 	//////////////////////////////////////////////////////////////////////////////
 	
 	result := c65 && c67 && c68
-	fmt.Println("########## result:")
-	fmt.Println(result)
 
 	return result, nil
 }
@@ -809,6 +788,7 @@ func (zkip *bip) Setup(H *bn256.G1, g,h []*bn256.G1, c *big.Int) (bip, error) {
 	
 	zkip.g = make([]*bn256.G1, zkip.n)
 	zkip.h = make([]*bn256.G1, zkip.n)
+	// TODO: not yet avoiding trusted setup...
 	ur := GetBigInt("18560948149108576432482904553159745978835170526553990798435819795989606410927")
 	zkip.u = new(bn256.G1).ScalarBaseMult(ur)
 	zkip.H = H
@@ -832,19 +812,10 @@ func (zkip *bip) Prove(a,b []*big.Int, P *bn256.G1) (proofBip, error) {
 	// Fiat-Shamir:
 	// x = Hash(g,h,P,c)
 	x, _ := HashIP(zkip.g, zkip.h, P, zkip.c, zkip.n)
-	//x = new(big.Int).SetInt64(1)
-	fmt.Println("Inner Product x:")
-	fmt.Println(x)	
-	fmt.Println("c:")
-	fmt.Println(zkip.c)	
-	fmt.Println("u:")
-	fmt.Println(zkip.u)	
 	// Pprime = P.u^(x.c)		
 	ux := new(bn256.G1).ScalarMult(zkip.u, x)  
 	uxc := new(bn256.G1).ScalarMult(ux, zkip.c)  
 	P = new(bn256.G1).Add(P, uxc)
-	fmt.Println("P.u^(x.c):")
-	fmt.Println(P)	
 	n = int64(len(a))
 	m = int64(len(b))
 	if (n != m) {
@@ -866,8 +837,6 @@ func BIP(a,b []*big.Int, g,h []*bn256.G1, u,P *bn256.G1, n int64) (proofBip, err
 		proof proofBip
 	)
 
-	fmt.Println("u:")
-	fmt.Println(u)
 	if (n == 1) {
 		// recursion end
 		proof.a = a[0]
@@ -882,53 +851,35 @@ func BIP(a,b []*big.Int, g,h []*bn256.G1, u,P *bn256.G1, n int64) (proofBip, err
 
 		// nprime := n / 2
 		nprime := n / 2
-		fmt.Println("nprime:")
-		fmt.Println(nprime)
 
 		// Compute cL = < a[:n'], b[n':] >
 		cL, _ := ScalarProduct(a[:nprime], b[nprime:])
-		fmt.Println("cL:")
-		fmt.Println(cL)
 		// Compute cR = < a[n':], b[:n'] >
 		cR, _ := ScalarProduct(a[nprime:], b[:nprime])
-		fmt.Println("cR:")
-		fmt.Println(cR)
 		// Compute L = g[n':]^(a[:n']).h[:n']^(b[n':]).u^cL
 		L, _ := VectorExp(g[nprime:],a[:nprime])
 		Lh, _ := VectorExp(h[:nprime], b[nprime:])
 		L.Add(L, Lh)
-		// TODO: uncomment next line
 		L.Add(L, new(bn256.G1).ScalarMult(u, cL))
-		fmt.Println("L:")
-		fmt.Println(L)
 		// Compute R = g[:n']^(a[n':]).h[n':]^(b[:n']).u^cR
 		R, _ := VectorExp(g[:nprime],a[nprime:]) 
 		Rh, _ := VectorExp(h[nprime:], b[:nprime])
 		R.Add(R, Rh)
-		// TODO: uncomment next line
 		R.Add(R, new(bn256.G1).ScalarMult(u, cR))
-		fmt.Println("R:")
-		fmt.Println(R)
 
 		// Fiat-Shamir:
 		x, _, _ := HashBP(L, R)
-		x = new(big.Int).SetInt64(1)
-		fmt.Println("x:")
-		fmt.Println(x)
+		//x = new(big.Int).SetInt64(1)
 		xinv := ModInverse(x, bn256.Order)
 
 		// Compute g' = g[:n']^(x^-1) * g[n':]^(x)
 		gprime, _ := VectorScalarExp(g[:nprime], xinv)
 		gprime2, _ := VectorScalarExp(g[nprime:], x)
 		gprime, _ = VectorECAdd(gprime, gprime2)
-		fmt.Println("gprime:")
-		fmt.Println(gprime)
 		// Compute h' = h[:n']^(x)    * h[n':]^(x^-1)
 		hprime, _ := VectorScalarExp(h[:nprime], x)
 		hprime2, _ := VectorScalarExp(h[nprime:], xinv)
 		hprime, _ = VectorECAdd(hprime, hprime2)
-		fmt.Println("hprime:")
-		fmt.Println(hprime)
 		// Compute P' = L^(x^2).P.R^(x^-2)
 		x2 := Multiply(x,x)
 		x2 = Mod(x2, bn256.Order)
@@ -936,23 +887,16 @@ func BIP(a,b []*big.Int, g,h []*bn256.G1, u,P *bn256.G1, n int64) (proofBip, err
 		Pprime := new(bn256.G1).ScalarMult(L, x2)
 		Pprime.Add(Pprime, P)
 		Pprime.Add(Pprime, new(bn256.G1).ScalarMult(R, x2inv))
-		fmt.Println("Pprime:")
-		fmt.Println(Pprime)
 
 		// Compute a' = a[:n'].x      + a[n':].x^(-1)
 		aprime, _ := VectorScalarMul(a[:nprime], x)
 		aprime2, _ := VectorScalarMul(a[nprime:], xinv)
 		aprime, _ = VectorAdd(aprime, aprime2)
-		fmt.Println("aprime:")
-		fmt.Println(aprime)
 		// Compute b' = b[:n'].x^(-1) + b[n':].x
 		bprime, _ := VectorScalarMul(b[:nprime], xinv)
 		bprime2, _ := VectorScalarMul(b[nprime:], x)
 		bprime, _ = VectorAdd(bprime, bprime2)
-		fmt.Println("bprime:")
-		fmt.Println(bprime)
 
-		fmt.Println("###############################################################")
 		// recursion BIP(g',h',u,P'; a', b')
 		proof, _ = BIP(aprime, bprime, gprime, hprime, u, Pprime, nprime)
 	}
@@ -965,31 +909,17 @@ InnerProduct is responsible for the verification of the Inner Product Proof.
 func (zkip *bip) Verify(proof proofBip) (bool, error) {
 	
 	// c == a*b
-	fmt.Println("a:")
-	fmt.Println(proof.a)
-	fmt.Println("b:")
-	fmt.Println(proof.b)
 	ab := Multiply(proof.a, proof.b)
 	ab = Mod(ab, bn256.Order)
-	fmt.Println("ab:")
-	fmt.Println(ab)
-	fmt.Println("c:")
-	fmt.Println(zkip.c)
 
 	// P == g^a.h^b.u^c
 	rhs := new(bn256.G1).ScalarMult(proof.g, proof.a)
 	rhs.Add(rhs, new(bn256.G1).ScalarMult(proof.h, proof.b))
 	rhs.Add(rhs, new(bn256.G1).ScalarMult(proof.u, ab))
-	fmt.Println("P:")
-	fmt.Println(proof.P)
-	fmt.Println("rhs:")
-	fmt.Println(rhs)
 
 	nP := proof.P.Neg(proof.P)
 	nP.Add(nP, rhs)
 	c := nP.IsZero() 
-	fmt.Println("########### Is infinity:")
-	fmt.Println(c)
 	
 	return c, nil
 }

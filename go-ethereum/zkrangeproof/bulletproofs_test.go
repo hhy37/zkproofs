@@ -30,7 +30,14 @@ func TestVectorCopy(t *testing.T) {
 		result []*big.Int
 	)
 	result, _ = VectorCopy(new(big.Int).SetInt64(1), 3)
-	fmt.Println(result)
+	ok := (result[0].Cmp(new(big.Int).SetInt64(1)) == 0)
+	ok = ok && (result[1].Cmp(GetBigInt("1")) == 0)
+	ok = ok && (result[2].Cmp(GetBigInt("1")) == 0)
+	fmt.Println("Vector copy result:")
+	fmt.Println(ok)
+	if ok != true {
+		t.Errorf("Assert failure: expected true, actual: %t", ok)
+	}
 }
 
 /*
@@ -46,7 +53,14 @@ func TestVectorConvertToBig(t *testing.T) {
 	a[1] = 4
 	a[2] = 5
 	result, _ = VectorConvertToBig(a, 3)
-	fmt.Println(result)
+	ok := (result[0].Cmp(new(big.Int).SetInt64(3)) == 0)
+	ok = ok && (result[1].Cmp(GetBigInt("4")) == 0)
+	ok = ok && (result[2].Cmp(GetBigInt("5")) == 0)
+	fmt.Println("Convert to big result:")
+	fmt.Println(ok)
+	if ok != true {
+		t.Errorf("Assert failure: expected true, actual: %t", ok)
+	}
 }
 
 /*
@@ -65,8 +79,12 @@ func TestScalarProduct(t *testing.T) {
 	b[1] = new(big.Int).SetInt64(3)
 	b[2] = new(big.Int).SetInt64(3)
 	result, _ := ScalarProduct(a, b)
+	ok := (result.Cmp(new(big.Int).SetInt64(63)) == 0)
 	fmt.Println("Scalar Product:")
-	fmt.Println(result)
+	fmt.Println(ok)
+	if ok != true {
+		t.Errorf("Assert failure: expected true, actual: %t", ok)
+	}
 }
 
 /*
@@ -85,8 +103,14 @@ func TestVectorAdd(t *testing.T) {
 	b[1] = new(big.Int).SetInt64(30)
 	b[2] = new(big.Int).SetInt64(40)
 	result, _ := VectorAdd(a, b)
-	fmt.Println("Addition:")
-	fmt.Println(result)
+	ok := (result[0].Cmp(new(big.Int).SetInt64(10)) == 0)
+	ok = ok && (result[1].Cmp(GetBigInt("38")) == 0)
+	ok = ok && (result[2].Cmp(GetBigInt("49")) == 0)
+	fmt.Println("Addition result:")
+	fmt.Println(ok)
+	if ok != true {
+		t.Errorf("Assert failure: expected true, actual: %t", ok)
+	}
 }
 
 /*
@@ -105,8 +129,14 @@ func TestVectorSub(t *testing.T) {
 	b[1] = new(big.Int).SetInt64(30)
 	b[2] = new(big.Int).SetInt64(40)
 	result, _ := VectorSub(a, b)
-	fmt.Println("Subtraction:")
-	fmt.Println(result)
+	ok := (result[0].Cmp(new(big.Int).SetInt64(4)) == 0)
+	ok = ok && (result[1].Cmp(GetBigInt("21888242871839275222246405745257275088548364400416034343698204186575808495595")) == 0)
+	ok = ok && (result[2].Cmp(GetBigInt("21888242871839275222246405745257275088548364400416034343698204186575808495586")) == 0)
+	fmt.Println("Subtraction result:")
+	fmt.Println(ok)
+	if ok != true {
+		t.Errorf("Assert failure: expected true, actual: %t", ok)
+	}
 }
 
 /*
@@ -125,8 +155,15 @@ func TestVectorMul(t *testing.T) {
 	b[1] = new(big.Int).SetInt64(30)
 	b[2] = new(big.Int).SetInt64(40)
 	result, _ := VectorMul(a, b)
-	fmt.Println("Multiplication:")
-	fmt.Println(result)
+	ok := (result[0].Cmp(new(big.Int).SetInt64(21)) == 0)
+	ok = ok && (result[1].Cmp(new(big.Int).SetInt64(240)) == 0)
+	ok = ok && (result[2].Cmp(new(big.Int).SetInt64(360)) == 0)
+
+	fmt.Println("Multiplication result:")
+	fmt.Println(ok)
+	if ok != true {
+		t.Errorf("Assert failure: expected true, actual: %t", ok)
+	}
 }
 
 /*
@@ -134,8 +171,15 @@ Test method PowerOf, which must return a vector containing a growing sequence of
 powers of 2.
 */
 func TestPowerOf(t *testing.T) {
-	result, _ := PowerOf(new(big.Int).SetInt64(3), 10)
-	fmt.Println(result)
+	result, _ := PowerOf(new(big.Int).SetInt64(3), 3)
+	ok := (result[0].Cmp(new(big.Int).SetInt64(1)) == 0)
+	ok = ok && (result[1].Cmp(new(big.Int).SetInt64(3)) == 0)
+	ok = ok && (result[2].Cmp(new(big.Int).SetInt64(9)) == 0)
+	fmt.Println("PowerOf result:")
+	fmt.Println(ok)
+	if ok != true {
+		t.Errorf("Assert failure: expected true, actual: %t", ok)
+	}
 }
 
 /*
@@ -149,7 +193,11 @@ func TestBulletproofsZKRP(t *testing.T) {
 	x := new(big.Int).SetInt64(123)
 	proof, _ := zkrp.Prove(x)
 	ok, _ := zkrp.Verify(proof)
+	fmt.Println("Range Proofs result:")
 	fmt.Println(ok)
+	if ok != true {
+		t.Errorf("Assert failure: expected true, actual: %t", ok)
+	}
 }
 
 /* 
@@ -166,20 +214,20 @@ func TestInnerProduct(t *testing.T) {
 	// Review if it is the best way, since we maybe could use the 
 	// inner product independently of the range proof. 
 	zkrp.Setup(0,4) 
-	fmt.Println("n:")
-	fmt.Println(zkrp.n)
 	a = make([]*big.Int, zkrp.n)
-	a[0] = new(big.Int).SetInt64(1)
-	a[1] = new(big.Int).SetInt64(2)
+	a[0] = new(big.Int).SetInt64(10)
+	a[1] = new(big.Int).SetInt64(20)
 	b = make([]*big.Int, zkrp.n)
-	b[0] = new(big.Int).SetInt64(7)
-	b[1] = new(big.Int).SetInt64(-1)
-	c := new(big.Int).SetInt64(5)
+	b[0] = new(big.Int).SetInt64(70)
+	b[1] = new(big.Int).SetInt64(-10)
+	c := new(big.Int).SetInt64(500)
 	commit, _ := CommitInnerProduct(zkrp.g, zkrp.h, a, b)
-	fmt.Println("commit:") 
-	fmt.Println(commit)
 	zkip.Setup(zkrp.H, zkrp.g, zkrp.h, c)
 	proof, _ := zkip.Prove(a, b, commit)	
 	ok, _ := zkip.Verify(proof)
+	fmt.Println("Inner Product result:")
 	fmt.Println(ok)
+	if ok != true {
+		t.Errorf("Assert failure: expected true, actual: %t", ok)
+	}
 }
