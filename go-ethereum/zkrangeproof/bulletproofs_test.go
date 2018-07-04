@@ -64,7 +64,7 @@ func TestScalarProduct(t *testing.T) {
 	b[0] = new(big.Int).SetInt64(3)
 	b[1] = new(big.Int).SetInt64(3)
 	b[2] = new(big.Int).SetInt64(3)
-	result, _ := ScalarProduct(a, b)
+	result, _ := ScalarProduct(a, b, int64(0), 3)
 	fmt.Println("Scalar Product:")
 	fmt.Println(result)
 }
@@ -162,22 +162,19 @@ func TestInnerProduct(t *testing.T) {
 		a []*big.Int
 		b []*big.Int
 	)
-	zkrp.Setup(0,2) // ITS BEING USED TO COMPUTE N 
-	//zkrp.x = new(big.Int).SetInt64(123)
-	//proof, _ := zkrp.Prove()
-	//ok, _ := zkrp.Verify(proof)
-	//fmt.Println(ok)
+	// TODO:
+	// Review if it is the best way, since we maybe could use the 
+	// inner product independently of the range proof. 
+	zkrp.Setup(0,4) 
 	fmt.Println("n:")
 	fmt.Println(zkrp.n)
-	a = make([]*big.Int, 1)
+	a = make([]*big.Int, zkrp.n)
 	a[0] = new(big.Int).SetInt64(1)
-	b = make([]*big.Int, 1)
-	b[0] = new(big.Int).SetInt64(1)
-	c := new(big.Int).SetInt64(1)
-	fmt.Println("g:")
-	fmt.Println(zkrp.g)
-	fmt.Println("h:")
-	fmt.Println(zkrp.h)
+	a[1] = new(big.Int).SetInt64(1)
+	b = make([]*big.Int, zkrp.n)
+	b[0] = new(big.Int).SetInt64(6)
+	b[1] = new(big.Int).SetInt64(-1)
+	c := new(big.Int).SetInt64(5)
 	commit, _ := CommitInnerProduct(zkrp.g, zkrp.h, a, b)
 	fmt.Println("commit:") 
 	fmt.Println(commit)

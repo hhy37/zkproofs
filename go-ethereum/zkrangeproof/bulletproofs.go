@@ -201,9 +201,30 @@ func VectorMul(a, b []*big.Int) ([]*big.Int, error) {
 }
 
 /*
+VectorECMul computes vector EC addition componentwisely.
+*/
+func VectorECAdd(a,b []*bn256.G1) ([]*bn256.G1, error) {
+	var (
+		result []*bn256.G1
+		i,n,m int64
+	)
+	n = int64(len(a))
+	m = int64(len(b))
+	if (n != m) {
+		return nil, errors.New("Size of first argument is different from size of second argument.")
+	}
+	result = make([]*bn256.G1, n)
+	i = 0
+	for i<n {
+		result[i] = a[i].Add(a[i], b[i])	
+		i = i + 1
+	}
+	return result, nil
+}
+/*
 ScalarProduct return the inner product between a and b.
 */
-func ScalarProduct(a, b []*big.Int) (*big.Int, error) {
+func ScalarProduct(a, b []*big.Int, from,to int64) (*big.Int, error) {
 	var (
 		result *big.Int
 		i,n,m int64
@@ -213,9 +234,9 @@ func ScalarProduct(a, b []*big.Int) (*big.Int, error) {
 	if (n != m) {
 		return nil, errors.New("Size of first argument is different from size of second argument.")
 	}
-	i = 0
+	i = from
 	result = GetBigInt("0")
-	for i<n {
+	for i<to {
 		ab := Multiply(a[i], b[i])	
 		result.Add(result, ab)	
 		result = Mod(result, bn256.Order) 
@@ -225,7 +246,7 @@ func ScalarProduct(a, b []*big.Int) (*big.Int, error) {
 }
 
 /*
-VectorPowerOf computes Prod_i^n{a[i]^b[i]}.
+VectorExp computes Prod_i^n{a[i]^b[i]}.
 */
 func VectorExp(a []*bn256.G1, b []*big.Int) (*bn256.G1, error) {
 	var (
@@ -242,6 +263,24 @@ func VectorExp(a []*bn256.G1, b []*big.Int) (*bn256.G1, error) {
 	for i<n {
 		apb := new(bn256.G1).ScalarMult(a[i], b[i])	
 		result.Add(result, apb)	
+		i = i + 1
+	}
+	return result, nil
+}
+
+/*
+VectorScalarExp computes a[i]^b for each i.
+*/
+func VectorScalarExp(a []*bn256.G1, b *big.Int) ([]*bn256.G1, error) {
+	var (
+		result []*bn256.G1
+		i,n int64
+	)
+	n = int64(len(a))
+	result = make([]*bn256.G1, n)
+	i = 0
+	for i<n {
+		result[i] = new(bn256.G1).ScalarMult(a[i], b)	
 		i = i + 1
 	}
 	return result, nil
@@ -380,11 +419,11 @@ func (zkrp *bp) Delta(y, z *big.Int) (*big.Int, error) {
 	// < 1^n, y^n >
 	v1, _ := VectorCopy(new(big.Int).SetInt64(1), zkrp.n)
 	vy, _ := PowerOf(y, zkrp.n) 
-	sp1y, _ := ScalarProduct(v1, vy)
+	sp1y, _ := ScalarProduct(v1, vy, int64(0), zkrp.n)
 
 	// < 1^n, 2^n >
 	p2n, _ := PowerOf(new(big.Int).SetInt64(2), zkrp.n)
-	sp12, _ := ScalarProduct(v1, p2n)
+	sp12, _ := ScalarProduct(v1, p2n, int64(0), zkrp.n)
 
 	result = Sub(z, z2)
 	result = Multiply(result, sp1y)
@@ -480,7 +519,7 @@ func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
 	ynsR, _ := VectorMul(vy, sR) 	
 
 	// scalar prod: < aL - z.1^n, y^n . sR >
-	sp1, _ := ScalarProduct(aLmvz, ynsR)
+	sp1, _ := ScalarProduct(aLmvz, ynsR, int64(0), zkrp.n)
 
 	// scalar prod: < sL, y^n . (aR + z . 1^n) >
 	naR, _ := VectorConvertToBig(aR, zkrp.n)
@@ -493,7 +532,7 @@ func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
 	zsquared := Multiply(z, z)
 	z22n, _ := VectorScalarMul(p2n, zsquared)
 	ynaRzn, _ = VectorAdd(ynaRzn, z22n)
-	sp2, _ := ScalarProduct(sL, ynaRzn)
+	sp2, _ := ScalarProduct(sL, ynaRzn, int64(0), zkrp.n)
 	
 	// sp1 + sp2
 	t1 := Add(sp1, sp2)
@@ -501,7 +540,7 @@ func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
 	
 
 	// compute t2: < sL, y^n . sR >
-	t2, _ := ScalarProduct(sL, ynsR)
+	t2, _ := ScalarProduct(sL, ynsR, int64(0), zkrp.n)
 	t2 = Mod(t2, bn256.Order)
 
 	// compute T1
@@ -530,7 +569,7 @@ func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
 	br, _ := VectorAdd(ynaRzn, z22n)
 
 	// Compute t` = < bl, br >
-	tprime, _ := ScalarProduct(bl, br)
+	tprime, _ := ScalarProduct(bl, br, int64(0), zkrp.n)
 
 	// Compute taux = tau2 . x^2 + tau1 . x + z^2 . gamma
 	taux := Multiply(tau2, Multiply(x, x))
@@ -681,7 +720,7 @@ func (zkrp *bp) Verify (proof proofBP) (bool, error) {
 	// Check that l,r are correct -------------------  Conditions (66) and (67) //
 	//////////////////////////////////////////////////////////////////////////////
 
-	sp, _ := ScalarProduct(proof.bl, proof.br)
+	sp, _ := ScalarProduct(proof.bl, proof.br, int64(0), zkrp.n)
 	fmt.Println(sp)
 	fmt.Println(proof.tprime)
 	c68 := sp.Cmp(proof.tprime) == 0
@@ -793,6 +832,7 @@ func (zkip *bip) Prove(a,b []*big.Int, P *bn256.G1) (proofBip, error) {
 	// Fiat-Shamir:
 	// x = Hash(g,h,P,c)
 	x, _ := HashIP(zkip.g, zkip.h, P, zkip.c, zkip.n)
+	x = new(big.Int).SetInt64(1)
 	fmt.Println("Inner Product x:")
 	fmt.Println(x)	
 	fmt.Println("c:")
@@ -829,10 +869,6 @@ func BIP(a,b []*big.Int, g,h []*bn256.G1, u,P *bn256.G1, n int64) (proofBip, err
 	fmt.Println("u:")
 	fmt.Println(u)
 	if (n == 1) {
-		fmt.Println("g:")
-		fmt.Println(g)
-		fmt.Println("h:")
-		fmt.Println(h)
 		// recursion end
 		proof.a = a[0]
 		proof.b = b[0]
@@ -845,29 +881,81 @@ func BIP(a,b []*big.Int, g,h []*bn256.G1, u,P *bn256.G1, n int64) (proofBip, err
 		// recursion
 
 		// nprime := n / 2
-		//nprime := Div(n, new(big.Int).SetInt64(2))
-		//fmt.Println("nprime:")
-		//fmt.Println(nprime)
+		nprime := n / 2
+		fmt.Println("nprime:")
+		fmt.Println(nprime)
 
 		// Compute cL = < a[:n'], b[n':] >
+		cL, _ := ScalarProduct(a, b, int64(0), nprime)
+		fmt.Println("cL:")
+		fmt.Println(cL)
 		// Compute cR = < a[n':], b[:n'] >
-		// Compute L = g[n':]^(a[:n']).h[:n']^(b[n':])
-		// Compute R = g[:n']^(a[n':]).h[n':]^(b[:n'])
+		cR, _ := ScalarProduct(a, b, nprime, n)
+		fmt.Println("cR:")
+		fmt.Println(cR)
+		// Compute L = g[n':]^(a[:n']).h[:n']^(b[n':]).u^cL
+		L, _ := VectorExp(g[nprime:],a[:nprime])
+		Lh, _ := VectorExp(h[:nprime], b[nprime:])
+		L.Add(L, Lh)
+		// TODO: uncomment next line
+		L.Add(L, new(bn256.G1).ScalarMult(u, cL))
+		fmt.Println("L:")
+		fmt.Println(L)
+		// Compute R = g[:n']^(a[n':]).h[n':]^(b[:n']).u^cR
+		R, _ := VectorExp(g[:nprime],a[nprime:]) 
+		Rh, _ := VectorExp(h[nprime:], b[:nprime])
+		R.Add(R, Rh)
+		// TODO: uncomment next line
+		R.Add(R, new(bn256.G1).ScalarMult(u, cR))
+		fmt.Println("R:")
+		fmt.Println(R)
 
 		// Fiat-Shamir:
-		// x = Hash(L, R)
+		x, _, _ := HashBP(L, R)
+		x = new(big.Int).SetInt64(1)
+		fmt.Println("x:")
+		fmt.Println(x)
+		xinv := ModInverse(x, bn256.Order)
 
 		// Compute g' = g[:n']^(x^-1) * g[n':]^(x)
+		gprime, _ := VectorScalarExp(g[:nprime], xinv)
+		gprime2, _ := VectorScalarExp(g[nprime:], x)
+		gprime, _ = VectorECAdd(gprime, gprime2)
+		fmt.Println("gprime:")
+		fmt.Println(gprime)
 		// Compute h' = h[:n']^(x)    * h[n':]^(x^-1)
+		hprime, _ := VectorScalarExp(h[:nprime], x)
+		hprime2, _ := VectorScalarExp(h[nprime:], xinv)
+		hprime, _ = VectorECAdd(hprime, hprime2)
+		fmt.Println("hprime:")
+		fmt.Println(hprime)
 		// Compute P' = L^(x^2).P.R^(x^-2)
+		x2 := Multiply(x,x)
+		x2 = Mod(x2, bn256.Order)
+		x2inv := ModInverse(x2, bn256.Order)
+		Pprime := new(bn256.G1).ScalarMult(L, x2)
+		Pprime.Add(Pprime, P)
+		Pprime.Add(Pprime, new(bn256.G1).ScalarMult(R, x2inv))
+		fmt.Println("Pprime:")
+		fmt.Println(Pprime)
 
 		// Compute a' = a[:n'].x      + a[n':].x^(-1)
+		aprime, _ := VectorScalarMul(a[:nprime], x)
+		aprime2, _ := VectorScalarMul(a[nprime:], xinv)
+		aprime, _ = VectorAdd(aprime, aprime2)
+		fmt.Println("aprime:")
+		fmt.Println(aprime)
 		// Compute b' = b[:n'].x^(-1) + b[n':].x
+		bprime, _ := VectorScalarMul(b[:nprime], xinv)
+		bprime2, _ := VectorScalarMul(b[nprime:], x)
+		bprime, _ = VectorAdd(bprime, bprime2)
+		fmt.Println("bprime:")
+		fmt.Println(bprime)
 
+		fmt.Println("###############################################################")
 		// recursion BIP(g',h',u,P'; a', b')
-
+		proof, _ = BIP(aprime, bprime, gprime, hprime, u, Pprime, nprime)
 	}
-	
 	return proof, nil
 }
 
@@ -877,31 +965,33 @@ InnerProduct is responsible for the verification of the Inner Product Proof.
 func (zkip *bip) Verify(proof proofBip) (bool, error) {
 	
 	// c == a*b
+	fmt.Println("a:")
+	fmt.Println(proof.a)
+	fmt.Println("b:")
+	fmt.Println(proof.b)
 	ab := Multiply(proof.a, proof.b)
-	cmp := zkip.c.Cmp(ab)
-	c1 := (cmp == 0)
-	fmt.Println("c1:")
-	fmt.Println(c1)
+	ab = Mod(ab, bn256.Order)
+	fmt.Println("ab:")
+	fmt.Println(ab)
+	fmt.Println("c:")
+	fmt.Println(zkip.c)
 
 	// P == g^a.h^b.u^c
 	rhs := new(bn256.G1).ScalarMult(proof.g, proof.a)
+	rhs.Add(rhs, new(bn256.G1).ScalarMult(proof.h, proof.b))
+	rhs.Add(rhs, new(bn256.G1).ScalarMult(proof.u, ab))
+	fmt.Println("P:")
+	fmt.Println(proof.P)
 	fmt.Println("rhs:")
 	fmt.Println(rhs)
-	fmt.Println("H:")
-	fmt.Println(zkip.H)
-	fmt.Println("b:")
-	fmt.Println(proof.b)
-	rhs.Add(rhs, new(bn256.G1).ScalarMult(proof.h, proof.b))
-	rhs.Add(rhs, new(bn256.G1).ScalarMult(proof.u, zkip.c))
 
 	nP := proof.P.Neg(proof.P)
 	nP.Add(nP, rhs)
-	c2 := nP.IsZero() 
+	c := nP.IsZero() 
 	fmt.Println("########### Is infinity:")
-	fmt.Println(c2)
-
+	fmt.Println(c)
 	
-	return c1 && c2, nil
+	return c, nil
 }
 
 
