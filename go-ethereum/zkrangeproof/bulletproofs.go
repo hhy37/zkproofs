@@ -224,7 +224,7 @@ func VectorECAdd(a,b []*bn256.G1) ([]*bn256.G1, error) {
 /*
 ScalarProduct return the inner product between a and b.
 */
-func ScalarProduct(a, b []*big.Int, from,to int64) (*big.Int, error) {
+func ScalarProduct(a, b []*big.Int) (*big.Int, error) {
 	var (
 		result *big.Int
 		i,n,m int64
@@ -234,9 +234,9 @@ func ScalarProduct(a, b []*big.Int, from,to int64) (*big.Int, error) {
 	if (n != m) {
 		return nil, errors.New("Size of first argument is different from size of second argument.")
 	}
-	i = from
+	i = 0
 	result = GetBigInt("0")
-	for i<to {
+	for i<n {
 		ab := Multiply(a[i], b[i])	
 		result.Add(result, ab)	
 		result = Mod(result, bn256.Order) 
@@ -419,11 +419,11 @@ func (zkrp *bp) Delta(y, z *big.Int) (*big.Int, error) {
 	// < 1^n, y^n >
 	v1, _ := VectorCopy(new(big.Int).SetInt64(1), zkrp.n)
 	vy, _ := PowerOf(y, zkrp.n) 
-	sp1y, _ := ScalarProduct(v1, vy, int64(0), zkrp.n)
+	sp1y, _ := ScalarProduct(v1, vy)
 
 	// < 1^n, 2^n >
 	p2n, _ := PowerOf(new(big.Int).SetInt64(2), zkrp.n)
-	sp12, _ := ScalarProduct(v1, p2n, int64(0), zkrp.n)
+	sp12, _ := ScalarProduct(v1, p2n)
 
 	result = Sub(z, z2)
 	result = Multiply(result, sp1y)
@@ -519,7 +519,7 @@ func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
 	ynsR, _ := VectorMul(vy, sR) 	
 
 	// scalar prod: < aL - z.1^n, y^n . sR >
-	sp1, _ := ScalarProduct(aLmvz, ynsR, int64(0), zkrp.n)
+	sp1, _ := ScalarProduct(aLmvz, ynsR)
 
 	// scalar prod: < sL, y^n . (aR + z . 1^n) >
 	naR, _ := VectorConvertToBig(aR, zkrp.n)
@@ -532,7 +532,7 @@ func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
 	zsquared := Multiply(z, z)
 	z22n, _ := VectorScalarMul(p2n, zsquared)
 	ynaRzn, _ = VectorAdd(ynaRzn, z22n)
-	sp2, _ := ScalarProduct(sL, ynaRzn, int64(0), zkrp.n)
+	sp2, _ := ScalarProduct(sL, ynaRzn)
 	
 	// sp1 + sp2
 	t1 := Add(sp1, sp2)
@@ -540,7 +540,7 @@ func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
 	
 
 	// compute t2: < sL, y^n . sR >
-	t2, _ := ScalarProduct(sL, ynsR, int64(0), zkrp.n)
+	t2, _ := ScalarProduct(sL, ynsR)
 	t2 = Mod(t2, bn256.Order)
 
 	// compute T1
@@ -569,7 +569,7 @@ func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
 	br, _ := VectorAdd(ynaRzn, z22n)
 
 	// Compute t` = < bl, br >
-	tprime, _ := ScalarProduct(bl, br, int64(0), zkrp.n)
+	tprime, _ := ScalarProduct(bl, br)
 
 	// Compute taux = tau2 . x^2 + tau1 . x + z^2 . gamma
 	taux := Multiply(tau2, Multiply(x, x))
@@ -720,7 +720,7 @@ func (zkrp *bp) Verify (proof proofBP) (bool, error) {
 	// Check that l,r are correct -------------------  Conditions (66) and (67) //
 	//////////////////////////////////////////////////////////////////////////////
 
-	sp, _ := ScalarProduct(proof.bl, proof.br, int64(0), zkrp.n)
+	sp, _ := ScalarProduct(proof.bl, proof.br)
 	fmt.Println(sp)
 	fmt.Println(proof.tprime)
 	c68 := sp.Cmp(proof.tprime) == 0
@@ -832,7 +832,7 @@ func (zkip *bip) Prove(a,b []*big.Int, P *bn256.G1) (proofBip, error) {
 	// Fiat-Shamir:
 	// x = Hash(g,h,P,c)
 	x, _ := HashIP(zkip.g, zkip.h, P, zkip.c, zkip.n)
-	x = new(big.Int).SetInt64(1)
+	//x = new(big.Int).SetInt64(1)
 	fmt.Println("Inner Product x:")
 	fmt.Println(x)	
 	fmt.Println("c:")
@@ -886,11 +886,11 @@ func BIP(a,b []*big.Int, g,h []*bn256.G1, u,P *bn256.G1, n int64) (proofBip, err
 		fmt.Println(nprime)
 
 		// Compute cL = < a[:n'], b[n':] >
-		cL, _ := ScalarProduct(a, b, int64(0), nprime)
+		cL, _ := ScalarProduct(a[:nprime], b[nprime:])
 		fmt.Println("cL:")
 		fmt.Println(cL)
 		// Compute cR = < a[n':], b[:n'] >
-		cR, _ := ScalarProduct(a, b, nprime, n)
+		cR, _ := ScalarProduct(a[nprime:], b[:nprime])
 		fmt.Println("cR:")
 		fmt.Println(cR)
 		// Compute L = g[n':]^(a[:n']).h[:n']^(b[n':]).u^cL
