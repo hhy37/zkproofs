@@ -213,14 +213,18 @@ func TestInnerProduct(t *testing.T) {
 	// TODO:
 	// Review if it is the best way, since we maybe could use the 
 	// inner product independently of the range proof. 
-	zkrp.Setup(0,4) 
+	zkrp.Setup(0,16) 
 	a = make([]*big.Int, zkrp.n)
 	a[0] = new(big.Int).SetInt64(10)
 	a[1] = new(big.Int).SetInt64(20)
+	a[2] = new(big.Int).SetInt64(10)
+	a[3] = new(big.Int).SetInt64(6)
 	b = make([]*big.Int, zkrp.n)
 	b[0] = new(big.Int).SetInt64(70)
 	b[1] = new(big.Int).SetInt64(-10)
-	c := new(big.Int).SetInt64(500)
+	b[2] = new(big.Int).SetInt64(10)
+	b[3] = new(big.Int).SetInt64(7)
+	c := new(big.Int).SetInt64(642)
 	commit, _ := CommitInnerProduct(zkrp.g, zkrp.h, a, b)
 	zkip.Setup(zkrp.H, zkrp.g, zkrp.h, c)
 	proof, _ := zkip.Prove(a, b, commit)	
