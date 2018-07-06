@@ -182,24 +182,6 @@ func TestPowerOf(t *testing.T) {
 	}
 }
 
-/*
-Test teh ZK Range Proof scheme using Bulletproofs. 
-*/
-func TestBulletproofsZKRP(t *testing.T) {
-	var (
-		zkrp bp
-	)
-	zkrp.Setup(0,65536) // ITS BEING USED TO COMPUTE N 
-	x := new(big.Int).SetInt64(123)
-	proof, _ := zkrp.Prove(x)
-	ok, _ := zkrp.Verify(proof)
-	fmt.Println("Range Proofs result:")
-	fmt.Println(ok)
-	if ok != true {
-		t.Errorf("Assert failure: expected true, actual: %t", ok)
-	}
-}
-
 /* 
 Test Inner Product argument.
 */
@@ -230,6 +212,24 @@ func TestInnerProduct(t *testing.T) {
 	proof, _ := zkip.Prove(a, b, commit)	
 	ok, _ := zkip.Verify(proof)
 	fmt.Println("Inner Product result:")
+	fmt.Println(ok)
+	if ok != true {
+		t.Errorf("Assert failure: expected true, actual: %t", ok)
+	}
+}
+
+/*
+Test teh ZK Range Proof scheme using Bulletproofs. 
+*/
+func TestBulletproofsZKRP(t *testing.T) {
+	var (
+		zkrp bp
+	)
+	zkrp.Setup(0,65536) // ITS BEING USED TO COMPUTE N 
+	x := new(big.Int).SetInt64(29847)
+	proof, _ := zkrp.Prove(x)
+	ok, _ := zkrp.Verify(proof)
+	fmt.Println("Range Proofs result:")
 	fmt.Println(ok)
 	if ok != true {
 		t.Errorf("Assert failure: expected true, actual: %t", ok)

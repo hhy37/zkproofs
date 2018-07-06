@@ -31,7 +31,6 @@ import (
 	"crypto/sha256"
 	"github.com/ing-bank/zkrangeproof/go-ethereum/byteconversion"
 	"errors"
-	"fmt"
 )
 
 /*
@@ -58,8 +57,6 @@ type proofBP struct {
 	taux *big.Int
 	mu *big.Int
 	tprime *big.Int
-	//br []*big.Int
-	//bl []*big.Int
 	proofip proofBip
 }
  
@@ -444,11 +441,10 @@ func (zkrp *bp) Setup(a,b int64) {
 		i int64
 	)
 	zkrp.G = new(bn256.G1).ScalarBaseMult(new(big.Int).SetInt64(1))
+	// TODO: change to avoid trusted setup
 	h := GetBigInt("18560948149108576432482904553159745978835170526553990798435819795989606410926")
 	zkrp.H = new(bn256.G1).ScalarBaseMult(h)
 	zkrp.n = int64(math.Log2(float64(b)))
-	fmt.Println("n:")
-	fmt.Println(zkrp.n)
 	zkrp.g = make([]*bn256.G1, zkrp.n)
 	zkrp.h = make([]*bn256.G1, zkrp.n)
 	i = 0
@@ -584,7 +580,6 @@ func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
 	mu = Mod(mu, bn256.Order) 
 
 	// Inner Product over (g, h', P.h^-mu, tprime)
-	//commit, _ := CommitInnerProduct(zkrp.g, zkrp.h, bl, br)
 	// Compute h'
 	hprime := make([]*bn256.G1, zkrp.n)
 	// Switch generators
@@ -598,51 +593,12 @@ func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
 		i = i + 1
 	}
 
-	// Compute P
-	// S^x
-	Sx := new(bn256.G1).ScalarMult(S, x)
-	// A.S^x
-	ASx := new(bn256.G1).Add(A, Sx)
-
-	// g^-z
-	mz := Sub(bn256.Order, z)
-	vmz, _ := VectorCopy(mz, zkrp.n)
-	gpmz, _ := VectorExp(zkrp.g, vmz)
-
-	// z.y^n
-	//vz, _ := VectorCopy(z, zkrp.n)
-	//vy, _ := PowerOf(y, zkrp.n) 
-	zyn, _ := VectorMul(vy, vz) 
-
-	//p2n, _ := PowerOf(new(big.Int).SetInt64(2), zkrp.n)
-	//zsquared := Multiply(z, z)
-	//z22n, _ := VectorScalarMul(p2n, zsquared)
-
-	// z.y^n + z^2.2^n
-	zynz22n, _ := VectorAdd(zyn, z22n) 
-	
-	P := new(bn256.G1)
-	P.Add(ASx, gpmz)
-	
-	// h'^(z.y^n + z^2.2^n)
-	hprimeexp, _ := VectorExp(hprime, zynz22n)
-
-	P.Add(P, hprimeexp)
-
-	// Compute h^mu
-	hmu := new(bn256.G1).ScalarMult(zkrp.H, mu)
-
-	// Compute P.h^mu
-	P.Add(P, hmu) 
-	
-	// Setup Inner Product Proof
-	//zkip.Setup(zkrp.H, zkrp.g, hprime, tprime)
+	// Update Inner Product Proof Setup
 	zkrp.zkip.h = hprime
 	zkrp.zkip.c = tprime
 
 	commit, _ := CommitInnerProduct(zkrp.g, hprime, bl, br)
 	proofip, _ := zkrp.zkip.Prove(bl, br, commit)	
-	//proofip, _ := zkrp.zkip.Prove(bl, br, P)	
 
 	// Remove unnecessary variables
 	proof.V = V
@@ -653,8 +609,6 @@ func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
 	proof.taux = taux
  	proof.mu = mu
 	proof.tprime = tprime
-	//proof.bl = bl
-	//proof.br = br
 	proof.proofip = proofip
 
 	return proof, nil
@@ -715,89 +669,19 @@ func (zkrp *bp) Verify (proof proofBP) (bool, error) {
 	rhs.Add(rhs, lhs)
 	c65 := rhs.IsZero() // Condition (65), page 20, from eprint version
 
-	//////////////////////////////////////////////////////////////////////////////
-	// Check that l,r are correct -------------------  Conditions (66) and (67) //
-	//////////////////////////////////////////////////////////////////////////////
-
-	// Compute P - lhs  #################### Condition (66) ######################
-
-	// S^x
-	Sx := new(bn256.G1).ScalarMult(proof.S, x)
-	// A.S^x
-	ASx := new(bn256.G1).Add(proof.A, Sx)
-
-	// g^-z
-	mz := Sub(bn256.Order, z)
-	vmz, _ := VectorCopy(mz, zkrp.n)
-	gpmz, _ := VectorExp(zkrp.g, vmz)
-
-	// z.y^n
-	vz, _ := VectorCopy(z, zkrp.n)
-	vy, _ := PowerOf(y, zkrp.n) 
-	zyn, _ := VectorMul(vy, vz) 
-
-	p2n, _ := PowerOf(new(big.Int).SetInt64(2), zkrp.n)
-	zsquared := Multiply(z, z)
-	z22n, _ := VectorScalarMul(p2n, zsquared)
-
-	// z.y^n + z^2.2^n
-	zynz22n, _ := VectorAdd(zyn, z22n) 
-	
-	lP := new(bn256.G1)
-	lP.Add(ASx, gpmz)
-	
-	// h'^(z.y^n + z^2.2^n)
-	hprimeexp, _ := VectorExp(hprime, zynz22n)
-
-	lP.Add(lP, hprimeexp)
-
-	// Compute P - rhs  #################### Condition (67) ######################
-	/*
-	// h^mu
-	rP := new(bn256.G1).ScalarMult(zkrp.H, proof.mu)
-	
-	// g^l
-	gpl, _:= VectorExp(zkrp.g, proof.bl)
-
-	// hprime^r
-	hprimepr, _:= VectorExp(hprime, proof.br)
-
-	rP.Add(rP, gpl)
-	rP.Add(rP, hprimepr)
-
-	// Subtract lhs and rhs and compare with point at infinity
-	lP = lP.Neg(lP)
-	rP.Add(rP, lP)
-	c67 := rP.IsZero() // Condition (65), page 20, from eprint version
-
-	//////////////////////////////////////////////////////////////////////////////
-	// Check that l,r are correct -------------------  Conditions (66) and (67) //
-	//////////////////////////////////////////////////////////////////////////////
-
-	sp, _ := ScalarProduct(proof.bl, proof.br)
-	c68 := sp.Cmp(proof.tprime) == 0
-	*/
-
 	// Verify Inner Product Proof ################################################
 	ok, _ := zkrp.zkip.Verify(proof.proofip)
 
-
-	//////////////////////////////////////////////////////////////////////////////
-	// Check that (65) (67) (68) are TRUE                                       //
-	//////////////////////////////////////////////////////////////////////////////
-	
-
-	fmt.Println("c65:")
-	fmt.Println(c65)
-	fmt.Println("ok:")
-	fmt.Println(ok)
 	result := c65 && ok
 
 	return result, nil
 }
 
-////////////////////////////// Inner Product //////////////////////////////
+//////////////////////////////////// Inner Product ////////////////////////////////////
 
+/*
+Base struct for the Inner Product Argument.
+*/
 type bip struct {
 	n int64
 	c *big.Int
@@ -807,6 +691,9 @@ type bip struct {
 	h []*bn256.G1  
 }
 
+/*
+Struct that contains the Inner Product Proof.
+*/
 type proofBip struct {
 	u *bn256.G1
 	P *bn256.G1
@@ -1002,29 +889,5 @@ func (zkip *bip) Verify(proof proofBip) (bool, error) {
 	
 	return c, nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
