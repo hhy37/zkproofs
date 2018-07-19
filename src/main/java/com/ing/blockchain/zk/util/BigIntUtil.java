@@ -19,7 +19,10 @@
 
 package com.ing.blockchain.zk.util;
 
+import org.bouncycastle.util.BigIntegers;
+
 import java.math.BigInteger;
+import java.security.SecureRandom;
 
 public class BigIntUtil {
 
@@ -80,4 +83,11 @@ public class BigIntUtil {
         return a.multiply(b.modInverse(N)).mod(N);
     }
 
+    public static BigInteger randomSignedInt(BigInteger maxAbsoluteValue, SecureRandom random) {
+        return BigIntegers.createRandomInRange(maxAbsoluteValue.negate(), maxAbsoluteValue, random);
+    }
+
+    public static int roundUpToMultiple(int i, int N) {
+        return (i + (N - 1)) / N * N;
+    }
 }

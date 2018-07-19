@@ -24,58 +24,53 @@ import com.ing.blockchain.zk.exception.ZeroKnowledgeException;
 import org.junit.Test;
 
 import java.math.BigInteger;
-import java.security.SecureRandom;
 
 import static junit.framework.TestCase.fail;
-import static org.junit.Assert.assertEquals;
 
 public class RangeProofTests {
 
-    static final SecretOrderGroup EXAMPLE_GROUP = new SecretOrderGroup(
+    public static final SecretOrderGroup EXAMPLE_GROUP = new SecretOrderGroup(
             new BigInteger("123763483659823661164839153854113"),
             new BigInteger("9978076495933337078596144096749"),
             new BigInteger("46959937887401751832025265468109"));
 
-    private BigInteger[] toArray(RangeProof proof) {
-        BigInteger[] res = new BigInteger[22];
-        res[0] = proof.getcPrime();
-        res[1] = proof.getcPrime1();
-        res[2] = proof.getcPrime2();;
-        res[3] = proof.getcPrime3();
-        res[4] = proof.getSqrProof3().getF();
-        res[5] = proof.getSqrProof3().getECProof().getC();
-        res[6] = proof.getSqrProof3().getECProof().getD();
-        res[7] = proof.getSqrProof3().getECProof().getD1();
-        res[8] = proof.getSqrProof3().getECProof().getD2();
-        res[9] = proof.getSqrProof4().getF();
-        res[10] = proof.getSqrProof4().getECProof().getC();
-        res[11] = proof.getSqrProof4().getECProof().getD();
-        res[12] = proof.getSqrProof4().getECProof().getD1();
-        res[13] = proof.getSqrProof4().getECProof().getD2();
-        res[14] = proof.getEcProof2().getC();
-        res[15] = proof.getEcProof2().getD();
-        res[16] = proof.getEcProof2().getD1();
-        res[17] = proof.getEcProof2().getD2();
-        res[18] = proof.getU();
-        res[19] = proof.getV();
-        res[20] = proof.getX();
-        res[21] = proof.getY();
+    private BigInteger[] toArray(BoudotRangeProof p) {
+        BigInteger[] res = new BigInteger[18];
+        res[0] = p.getCLeftSquare();
+        res[1] = p.getCRightSquare();
+        res[2] = p.getSqrProofLeft().getF();
+        res[3] = p.getSqrProofLeft().getECProof().getC();
+        res[4] = p.getSqrProofLeft().getECProof().getD();
+        res[5] = p.getSqrProofLeft().getECProof().getD1();
+        res[6] = p.getSqrProofLeft().getECProof().getD2();
+        res[7] = p.getSqrProofRight().getF();
+        res[8] = p.getSqrProofRight().getECProof().getC();
+        res[9] = p.getSqrProofRight().getECProof().getD();
+        res[10] = p.getSqrProofRight().getECProof().getD1();
+        res[11] = p.getSqrProofRight().getECProof().getD2();
+        res[12] = p.getCftProofLeft().getC();
+        res[13] = p.getCftProofLeft().getD1();
+        res[14] = p.getCftProofLeft().getD2();
+        res[15] = p.getCftProofRight().getC();
+        res[16] = p.getCftProofRight().getD1();
+        res[17] = p.getCftProofRight().getD2();
         return res;
     }
 
-    private RangeProof fromArray(BigInteger[] proof) {
+    private BoudotRangeProof fromArray(BigInteger[] proof) {
+        ECProof ecProof1 = new ECProof(proof[9], proof[10], proof[11], proof[12]);
         ECProof ecProof2 = new ECProof(proof[14], proof[15], proof[16], proof[17]);
-        ECProof ecProof3 = new ECProof(proof[5], proof[6], proof[7], proof[8]);
-        ECProof ecProof4 = new ECProof(proof[10], proof[11], proof[12], proof[13]);
-        SquareProof sqrProof3 = new SquareProof(proof[4], ecProof3);
-        SquareProof sqrProof4 = new SquareProof(proof[9], ecProof4);
-        return new RangeProof(ecProof2, sqrProof3, sqrProof4, proof[0], proof[1], proof[2], proof[3], proof[20], proof[21], proof[18], proof[19]);
+        SquareProof sqrProof1 = new SquareProof(proof[8], ecProof1);
+        SquareProof sqrProof2 = new SquareProof(proof[13], ecProof2);
+        CFTProof cftProof1 = new CFTProof(proof[2], proof[3], proof[4]);
+        CFTProof cftProof2 = new CFTProof(proof[5], proof[6], proof[7]);
+        return new BoudotRangeProof(proof[0], proof[1], sqrProof1, sqrProof2, cftProof1, cftProof2);
     }
 
     private void checkProofRejection(BigInteger[] fakeProofArray, Commitment c, ClosedRange range) {
-        RangeProof fakeProof = fromArray(fakeProofArray);
+        BoudotRangeProof fakeProof = fromArray(fakeProofArray);
         try {
-            HPAKErangeProof.validateRangeProof(fakeProof, c, range);
+            RangeProof.validateRangeProof(fakeProof, c, range);
             fail("No error at fake proof");
         } catch (ZeroKnowledgeException e) {
             System.out.println("Fake proof was rejected");
@@ -89,9 +84,9 @@ public class RangeProofTests {
         TTPMessage message = TTPGenerator.generateTTPMessage(x, EXAMPLE_GROUP);
         ClosedRange range = ClosedRange.of("10", "100");
 
-        RangeProof rangeProof = HPAKErangeProof.calculateRangeProof(message, range);
+        BoudotRangeProof rangeProof = RangeProof.calculateRangeProof(message, range);
 
-        HPAKErangeProof.validateRangeProof(rangeProof, message.getCommitment(), range);
+        RangeProof.validateRangeProof(rangeProof, message.getCommitment(), range);
 
         System.out.println("C = " + message.getCommitment().getCommitmentValue());
         BigInteger[] bigIntegers = toArray(rangeProof);
@@ -107,7 +102,7 @@ public class RangeProofTests {
 
         TTPMessage message = TTPGenerator.generateTTPMessage(x, EXAMPLE_GROUP);
         ClosedRange range = ClosedRange.of("10", "100");
-        BigInteger[] proof = toArray(HPAKErangeProof.calculateRangeProof(message, range));
+        BigInteger[] proof = toArray(RangeProof.calculateRangeProof(message, range));
 
         for (int i = 0; i < proof.length; i++) {
             System.out.println("Modifying field " + i);
@@ -123,60 +118,64 @@ public class RangeProofTests {
     }
 
     @Test (expected = ZeroKnowledgeException.class)
-    public void testModifiedRange() throws Exception {
+    public void testInvalidRange() throws Exception {
         BigInteger x = new BigInteger("50");
 
         TTPMessage message = TTPGenerator.generateTTPMessage(x, EXAMPLE_GROUP);
         ClosedRange range = ClosedRange.of("10", "100");
-        RangeProof rangeProof = HPAKErangeProof.calculateRangeProof(message, range);
+        BoudotRangeProof rangeProof = RangeProof.calculateRangeProof(message, range);
 
         ClosedRange fakeRange = ClosedRange.of("51", "100");
-        HPAKErangeProof.validateRangeProof(rangeProof, message.getCommitment(), fakeRange);
+        RangeProof.validateRangeProof(rangeProof, message.getCommitment(), fakeRange);
     }
 
     @Test (expected = ZeroKnowledgeException.class)
+    public void testMismatchValidRange() throws Exception {
+        BigInteger x = new BigInteger("100");
+
+        TTPMessage message = TTPGenerator.generateTTPMessage(x, EXAMPLE_GROUP);
+        ClosedRange range = ClosedRange.of("10", "100");
+        BoudotRangeProof rangeProof = RangeProof.calculateRangeProof(message, range);
+
+        ClosedRange fakeRange = ClosedRange.of("11", "100");
+        RangeProof.validateRangeProof(rangeProof, message.getCommitment(), fakeRange);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
     public void testRangeTooHigh() throws Exception {
         BigInteger x = new BigInteger("50");
         TTPMessage message = TTPGenerator.generateTTPMessage(x, EXAMPLE_GROUP);
         ClosedRange range = ClosedRange.of("51", "100");
-        RangeProof rangeProof = HPAKErangeProof.calculateRangeProof(message, range);
-        HPAKErangeProof.validateRangeProof(rangeProof, message.getCommitment(), range);
+        BoudotRangeProof rangeProof = RangeProof.calculateRangeProof(message, range);
     }
 
-    @Test (expected = ZeroKnowledgeException.class)
+    @Test (expected = IllegalArgumentException.class)
     public void testRangeTooLow() throws Exception {
         BigInteger x = new BigInteger("50");
         TTPMessage message = TTPGenerator.generateTTPMessage(x, EXAMPLE_GROUP);
         ClosedRange range = ClosedRange.of("10", "49");
-        RangeProof rangeProof = HPAKErangeProof.calculateRangeProof(message, range);
-        HPAKErangeProof.validateRangeProof(rangeProof, message.getCommitment(), range);
+        BoudotRangeProof rangeProof = RangeProof.calculateRangeProof(message, range);
     }
 
     @Test
-    public void testLargeValue() throws Exception {
-        BigInteger largeValue = BigInteger.valueOf(2).pow(128);
+    public void testLargeValueLargeRange() throws Exception {
+        BigInteger largeValue = BigInteger.valueOf(2).pow(200);
         TTPMessage message = TTPGenerator.generateTTPMessage(largeValue, EXAMPLE_GROUP);
 
         // Large range
         ClosedRange range = ClosedRange.of(largeValue.shiftRight(10), largeValue.shiftLeft(10));
-        RangeProof rangeProof = HPAKErangeProof.calculateRangeProof(message, range);
-        HPAKErangeProof.validateRangeProof(rangeProof, message.getCommitment(), range);
-
-        // Small range
-        range = ClosedRange.of(largeValue, largeValue);
-        rangeProof = HPAKErangeProof.calculateRangeProof(message, range);
-        HPAKErangeProof.validateRangeProof(rangeProof, message.getCommitment(), range);
+        BoudotRangeProof rangeProof = RangeProof.calculateRangeProof(message, range);
+        RangeProof.validateRangeProof(rangeProof, message.getCommitment(), range);
     }
 
     @Test
-    public void testRangeProofMmaker() {
-        BigInteger two = new BigInteger("2");
-        BigInteger three = new BigInteger("3");
-        for (int i = 1; i < 10; i++) {
-            BigInteger requiredSum = three.modPow(BigInteger.valueOf(i), two.pow(i));
-            BigInteger[] m = HPAKErangeProof.takeRandomM(requiredSum);
-            // Verify : m1 + m2 + m4^2 = sum
-            assertEquals(requiredSum, m[0].add(m[1]).add(m[2].multiply(m[2])));
-        }
+    public void testLargeValueSmallRange() throws Exception {
+        BigInteger largeValue = BigInteger.valueOf(2).pow(128);
+        TTPMessage message = TTPGenerator.generateTTPMessage(largeValue, EXAMPLE_GROUP);
+
+        // Small range
+        ClosedRange range = ClosedRange.of(largeValue, largeValue);
+        BoudotRangeProof rangeProof = RangeProof.calculateRangeProof(message, range);
+        RangeProof.validateRangeProof(rangeProof, message.getCommitment(), range);
     }
 }

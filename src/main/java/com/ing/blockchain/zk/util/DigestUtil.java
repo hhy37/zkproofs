@@ -20,8 +20,9 @@
 package com.ing.blockchain.zk.util;
 
 import org.bouncycastle.crypto.Digest;
-import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.digests.KeccakDigest;
 import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.BigIntegers;
 
 import java.math.BigInteger;
 
@@ -32,20 +33,20 @@ public class DigestUtil {
 
     private static void update(org.bouncycastle.crypto.Digest digest, BigInteger ... bigIntegers) {
         for (BigInteger bigInt : bigIntegers) {
-            byte[] encodedBigInt = bigInt.toByteArray();
+            int lengthInBytes = BigIntUtil.roundUpToMultiple(bigInt.bitLength(), 256) / 8;
+            byte[] encodedBigInt = BigIntegers.asUnsignedByteArray(lengthInBytes, bigInt);
             update(digest, encodedBigInt);
             Arrays.fill(encodedBigInt, (byte) 0);
         }
     }
 
     public static BigInteger calculateHash(BigInteger ... bigIntegers) {
-        Digest digest = new SHA256Digest();
+        Digest digest = new KeccakDigest(256);
         DigestUtil.update(digest, bigIntegers);
 
         byte[] output = new byte[digest.getDigestSize()];
         digest.doFinal(output, 0);
-
-        return new BigInteger(output);
+        return BigIntegers.fromUnsignedByteArray(output);
     }
 
     private static void update(org.bouncycastle.crypto.Digest digest, byte[] buffer) {
