@@ -689,6 +689,7 @@ type bip struct {
 	H *bn256.G1
 	g []*bn256.G1  
 	h []*bn256.G1  
+	P *bn256.G1
 }
 
 /*
@@ -697,13 +698,13 @@ Struct that contains the Inner Product Proof.
 type proofBip struct {
 	Ls []*bn256.G1
 	Rs []*bn256.G1
-	xs []*big.Int
 	u *bn256.G1
 	P *bn256.G1
 	g *bn256.G1
 	h *bn256.G1
 	a *big.Int
 	b *big.Int
+	n int64
 }
 
 /*
@@ -776,6 +777,8 @@ func (zkip *bip) Prove(a,b []*big.Int, P *bn256.G1) (proofBip, error) {
 	var (
 		proof proofBip
 		n,m int64
+		Ls []*bn256.G1 
+		Rs []*bn256.G1 
 	)
 
 	// Fiat-Shamir:
@@ -791,7 +794,8 @@ func (zkip *bip) Prove(a,b []*big.Int, P *bn256.G1) (proofBip, error) {
 		return proof, errors.New("Size of first array argument must be equal to the second")
 	} else {
 		// Execute Protocol 2 recursively
-		proof, err := BIP(a, b, zkip.g, zkip.h, ux, P, n)
+		zkip.P = P
+		proof, err := BIP(a, b, zkip.g, zkip.h, ux, zkip.P, n, Ls, Rs)
 		return proof, err
 	}
 		
@@ -801,16 +805,11 @@ func (zkip *bip) Prove(a,b []*big.Int, P *bn256.G1) (proofBip, error) {
 /*
 BIP is the main recursive function that will be used to compute the inner product argument.
 */
-func BIP(a,b []*big.Int, g,h []*bn256.G1, u,P *bn256.G1, n int64) (proofBip, error) {
+func BIP(a,b []*big.Int, g,h []*bn256.G1, u,P *bn256.G1, n int64, Ls,Rs []*bn256.G1) (proofBip, error) {
 	var (
 		proof proofBip
 	)
 
-	psize := int64(math.Log2(float64(n))) + 1
-	proof.Ls = make([]*bn256.G1, psize) 
-	proof.Rs = make([]*bn256.G1, psize) 
-	proof.xs = make([]*big.Int, psize) 
-	i := 0
 	if (n == 1) {
 		// recursion end
 		proof.a = a[0]
@@ -819,6 +818,8 @@ func BIP(a,b []*big.Int, g,h []*bn256.G1, u,P *bn256.G1, n int64) (proofBip, err
 		proof.h = h[0]
 		proof.P = P
 		proof.u = u
+		proof.Ls = Ls
+		proof.Rs = Rs
 
 	} else {
 		// recursion
@@ -843,7 +844,6 @@ func BIP(a,b []*big.Int, g,h []*bn256.G1, u,P *bn256.G1, n int64) (proofBip, err
 
 		// Fiat-Shamir:
 		x, _, _ := HashBP(L, R)
-		//x = new(big.Int).SetInt64(1)
 		xinv := ModInverse(x, bn256.Order)
 
 		// Compute g' = g[:n']^(x^-1) * g[n':]^(x)
@@ -870,14 +870,13 @@ func BIP(a,b []*big.Int, g,h []*bn256.G1, u,P *bn256.G1, n int64) (proofBip, err
 		bprime2, _ := VectorScalarMul(b[nprime:], x)
 		bprime, _ = VectorAdd(bprime, bprime2)
 
+		Ls = append(Ls, L)
+		Rs = append(Rs, R)
 		// recursion BIP(g',h',u,P'; a', b')
-		proof, _ = BIP(aprime, bprime, gprime, hprime, u, Pprime, nprime)
-		proof.Ls[i] = L
-		proof.Rs[i] = R
-		proof.xs[i] = x
-		i = i + 1
+		proof, _ = BIP(aprime, bprime, gprime, hprime, u, Pprime, nprime, Ls, Rs)
 
 	}
+	proof.n = n
 	return proof, nil
 }
 
@@ -886,19 +885,58 @@ InnerProduct is responsible for the verification of the Inner Product Proof.
 */
 func (zkip *bip) Verify(proof proofBip) (bool, error) {
 	
+	logn := len(proof.Ls)
+	var i int64
+
+	i = 0
+	gprime := zkip.g
+	hprime := zkip.h
+	Pprime := zkip.P
+	nprime := proof.n 
+	for i < int64(logn) {
+		nprime = nprime / 2
+		x, _, _ := HashBP(proof.Ls[i], proof.Rs[i])
+		xinv := ModInverse(x, bn256.Order)
+		// Compute g' = g[:n']^(x^-1) * g[n':]^(x)
+		ngprime, _ := VectorScalarExp(gprime[:nprime], xinv)
+		ngprime2, _ := VectorScalarExp(gprime[nprime:], x)
+		gprime, _ = VectorECAdd(ngprime, ngprime2)
+		// Compute h' = h[:n']^(x)    * h[n':]^(x^-1)
+		nhprime, _ := VectorScalarExp(hprime[:nprime], x)
+		nhprime2, _ := VectorScalarExp(hprime[nprime:], xinv)
+		hprime, _ = VectorECAdd(nhprime, nhprime2)
+		// Compute P' = L^(x^2).P.R^(x^-2)
+		x2 := Mod(Multiply(x,x), bn256.Order)
+		x2inv := ModInverse(x2, bn256.Order)
+		Pprime.Add(Pprime, new(bn256.G1).ScalarMult(proof.Ls[i], x2))
+		//Pprime.Add(Pprime, Pprime)
+		Pprime.Add(Pprime, new(bn256.G1).ScalarMult(proof.Rs[i], x2inv))
+
+		i = i + 1
+	}
+
 	// c == a*b
 	ab := Multiply(proof.a, proof.b)
 	ab = Mod(ab, bn256.Order)
 
 	// P == g^a.h^b.u^c
-	rhs := new(bn256.G1).ScalarMult(proof.g, proof.a)
+	/*rhs := new(bn256.G1).ScalarMult(proof.g, proof.a)
 	rhs.Add(rhs, new(bn256.G1).ScalarMult(proof.h, proof.b))
 	rhs.Add(rhs, new(bn256.G1).ScalarMult(proof.u, ab))
 
 	nP := proof.P.Neg(proof.P)
 	nP.Add(nP, rhs)
-	c := nP.IsZero() 
+	c := nP.IsZero() */
 	
+	//////////////////////////////////////////////////////////////////////
+	rhs := new(bn256.G1).ScalarMult(gprime[0], proof.a)
+	rhs.Add(rhs, new(bn256.G1).ScalarMult(hprime[0], proof.b))
+	rhs.Add(rhs, new(bn256.G1).ScalarMult(proof.u, ab))
+
+	nP := Pprime.Neg(Pprime)
+	nP.Add(nP, rhs)
+	c := nP.IsZero() 
+
 	return c, nil
 }
 

@@ -227,12 +227,12 @@ func TestBulletproofsZKRP(t *testing.T) {
 		zkrp bp
 	)
 	startTime := time.Now()
-	zkrp.Setup(0,65536) // ITS BEING USED TO COMPUTE N 
+	zkrp.Setup(0,4294967296) // ITS BEING USED TO COMPUTE N 
 	setupTime := time.Now()
 	fmt.Println("Setup time:")
 	fmt.Println(setupTime.Sub(startTime))
 	
-	x := new(big.Int).SetInt64(29847)
+	x := new(big.Int).SetInt64(4290967290)
 	proof, _ := zkrp.Prove(x)
 	proofTime := time.Now()
 	fmt.Println("Proof time:")
