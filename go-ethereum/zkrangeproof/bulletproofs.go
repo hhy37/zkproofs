@@ -695,6 +695,9 @@ type bip struct {
 Struct that contains the Inner Product Proof.
 */
 type proofBip struct {
+	Ls []*bn256.G1
+	Rs []*bn256.G1
+	xs []*big.Int
 	u *bn256.G1
 	P *bn256.G1
 	g *bn256.G1
@@ -803,6 +806,11 @@ func BIP(a,b []*big.Int, g,h []*bn256.G1, u,P *bn256.G1, n int64) (proofBip, err
 		proof proofBip
 	)
 
+	psize := int64(math.Log2(float64(n))) + 1
+	proof.Ls = make([]*bn256.G1, psize) 
+	proof.Rs = make([]*bn256.G1, psize) 
+	proof.xs = make([]*big.Int, psize) 
+	i := 0
 	if (n == 1) {
 		// recursion end
 		proof.a = a[0]
@@ -847,8 +855,7 @@ func BIP(a,b []*big.Int, g,h []*bn256.G1, u,P *bn256.G1, n int64) (proofBip, err
 		hprime2, _ := VectorScalarExp(h[nprime:], xinv)
 		hprime, _ = VectorECAdd(hprime, hprime2)
 		// Compute P' = L^(x^2).P.R^(x^-2)
-		x2 := Multiply(x,x)
-		x2 = Mod(x2, bn256.Order)
+		x2 := Mod(Multiply(x,x), bn256.Order)
 		x2inv := ModInverse(x2, bn256.Order)
 		Pprime := new(bn256.G1).ScalarMult(L, x2)
 		Pprime.Add(Pprime, P)
@@ -865,6 +872,11 @@ func BIP(a,b []*big.Int, g,h []*bn256.G1, u,P *bn256.G1, n int64) (proofBip, err
 
 		// recursion BIP(g',h',u,P'; a', b')
 		proof, _ = BIP(aprime, bprime, gprime, hprime, u, Pprime, nprime)
+		proof.Ls[i] = L
+		proof.Rs[i] = R
+		proof.xs[i] = x
+		i = i + 1
+
 	}
 	return proof, nil
 }

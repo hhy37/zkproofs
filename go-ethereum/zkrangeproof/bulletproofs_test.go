@@ -20,6 +20,7 @@ import (
 	"testing"
 	"math/big"
 	"fmt"
+	"time" 
 )
 
 /*
@@ -225,10 +226,23 @@ func TestBulletproofsZKRP(t *testing.T) {
 	var (
 		zkrp bp
 	)
+	startTime := time.Now()
 	zkrp.Setup(0,65536) // ITS BEING USED TO COMPUTE N 
+	setupTime := time.Now()
+	fmt.Println("Setup time:")
+	fmt.Println(setupTime.Sub(startTime))
+	
 	x := new(big.Int).SetInt64(29847)
 	proof, _ := zkrp.Prove(x)
+	proofTime := time.Now()
+	fmt.Println("Proof time:")
+	fmt.Println(proofTime.Sub(setupTime))
+
 	ok, _ := zkrp.Verify(proof)
+	verifyTime := time.Now()
+	fmt.Println("Verify time:")
+	fmt.Println(verifyTime.Sub(proofTime))
+	
 	fmt.Println("Range Proofs result:")
 	fmt.Println(ok)
 	if ok != true {
