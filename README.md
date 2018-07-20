@@ -2,15 +2,7 @@
 
 ING's zero knowledge range proof contract for Ethereum. This version is based on the Byzantium precompiles.
 
-## Important note:
-
-The initial version of this library implemented the whitepaper “An Efficient Range Proof Scheme” by Kun Peng and Feng Bao. As discovered by Madars Virza, Research Scientist at MIT Media Lab, this protocol contains a potential security vulnerability.
-
-*“The publicly computable value y/t is roughly the same magnitude (in expectation) as w^2 \* (m-a+1)(b-m+1). However, w^2 has fixed bit length (again, in expectation) and thus for a fixed range, this value leaks the magnitude of the committed value.”*
-
-Therefore, the proof is not zero knowledge. We’re currently evaluating which protocol to use instead in order to provide a secure Zero Knowledge Proof protocol.
-
-The current implementation is one of the options we are considering, based on the paper "Efficient Proofs that a Committed Number Lies in an Interval" by Fabrice Boudot.
+The current implementation is based on the paper "Efficient Proofs that a Committed Number Lies in an Interval" by Fabrice Boudot.
 
 ## Intro
 
