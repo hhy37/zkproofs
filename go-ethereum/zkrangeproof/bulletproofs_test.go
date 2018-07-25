@@ -21,6 +21,8 @@ import (
 	"math/big"
 	"fmt"
 	"time" 
+	"crypto/rand"
+	"github.com/ing-bank/zkrangeproof/go-ethereum/crypto/bn256"
 )
 
 /*
@@ -131,8 +133,8 @@ func TestVectorSub(t *testing.T) {
 	b[2] = new(big.Int).SetInt64(40)
 	result, _ := VectorSub(a, b)
 	ok := (result[0].Cmp(new(big.Int).SetInt64(4)) == 0)
-	ok = ok && (result[1].Cmp(GetBigInt("21888242871839275222246405745257275088548364400416034343698204186575808495595")) == 0)
-	ok = ok && (result[2].Cmp(GetBigInt("21888242871839275222246405745257275088548364400416034343698204186575808495586")) == 0)
+	ok = ok && (result[1].Cmp(GetBigInt("115792089237316195423570985008687907852837564279074904382605163141518161494315")) == 0)
+	ok = ok && (result[2].Cmp(GetBigInt("115792089237316195423570985008687907852837564279074904382605163141518161494306")) == 0)
 	fmt.Println("Subtraction result:")
 	fmt.Println(ok)
 	if ok != true {
@@ -197,17 +199,19 @@ func TestInnerProduct(t *testing.T) {
 	// Review if it is the best way, since we maybe could use the 
 	// inner product independently of the range proof. 
 	zkrp.Setup(0,16) 
+	//zkrp.Setup(0,4) 
+	//zkrp.Setup(0,2) 
 	a = make([]*big.Int, zkrp.n)
-	a[0] = new(big.Int).SetInt64(10)
-	a[1] = new(big.Int).SetInt64(20)
+	a[0] = new(big.Int).SetInt64(2)
+	a[1] = new(big.Int).SetInt64(-1)
 	a[2] = new(big.Int).SetInt64(10)
 	a[3] = new(big.Int).SetInt64(6)
 	b = make([]*big.Int, zkrp.n)
-	b[0] = new(big.Int).SetInt64(70)
-	b[1] = new(big.Int).SetInt64(-10)
+	b[0] = new(big.Int).SetInt64(1)
+	b[1] = new(big.Int).SetInt64(2)
 	b[2] = new(big.Int).SetInt64(10)
 	b[3] = new(big.Int).SetInt64(7)
-	c := new(big.Int).SetInt64(642)
+	c := new(big.Int).SetInt64(142)
 	commit, _ := CommitInnerProduct(zkrp.g, zkrp.h, a, b)
 	zkip.Setup(zkrp.H, zkrp.g, zkrp.h, c)
 	proof, _ := zkip.Prove(a, b, commit)	
@@ -232,7 +236,7 @@ func TestBulletproofsZKRP(t *testing.T) {
 	fmt.Println("Setup time:")
 	fmt.Println(setupTime.Sub(startTime))
 	
-	x := new(big.Int).SetInt64(4290967290)
+	x := new(big.Int).SetInt64(4190967290)
 	proof, _ := zkrp.Prove(x)
 	proofTime := time.Now()
 	fmt.Println("Proof time:")
@@ -249,3 +253,14 @@ func TestBulletproofsZKRP(t *testing.T) {
 		t.Errorf("Assert failure: expected true, actual: %t", ok)
 	}
 }
+
+func BenchmarkScalarMult(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		a, _ := rand.Int(rand.Reader, bn256.Order)
+		A := new(bn256.G1).ScalarBaseMult(a)
+		fmt.Println("A:")
+		fmt.Println(A)
+	}
+}
+
