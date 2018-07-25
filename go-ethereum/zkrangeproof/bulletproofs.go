@@ -27,11 +27,9 @@ import (
 	"math"
 	"math/big"
 	"crypto/rand"
-	//"github.com/ing-bank/zkrangeproof/go-ethereum/crypto/bn256"
 	"crypto/sha256"
 	"github.com/ing-bank/zkrangeproof/go-ethereum/byteconversion"
 	"errors"
-	//"fmt"
 )
 
 var (
@@ -757,7 +755,6 @@ func (zkip *bip) Setup(H *p256, g,h []*p256, c *big.Int) (bip, error) {
 	zkip.h = make([]*p256, zkip.n)
 	// TODO: not yet avoiding trusted setup...
 	ur := GetBigInt("18560948149108576432482904553159745978835170526553990798435819795989606410927")
-	//ur = new(big.Int).SetInt64(0)
 	zkip.u = new(p256).ScalarBaseMult(ur)
 	zkip.H = H
 	zkip.g = g
@@ -782,7 +779,6 @@ func (zkip *bip) Prove(a,b []*big.Int, P *p256) (proofBip, error) {
 	// Fiat-Shamir:
 	// x = Hash(g,h,P,c)
 	x, _ := HashIP(zkip.g, zkip.h, P, zkip.c, zkip.n)
-	x = new(big.Int).SetInt64(1)
 	// Pprime = P.u^(x.c)		
 	ux := new(p256).ScalarMult(zkip.u, x)  
 	uxc := new(p256).ScalarMult(ux, zkip.c)  
@@ -840,7 +836,6 @@ func BIP(a,b []*big.Int, g,h []*p256, u,P *p256, n int64, Ls,Rs []*p256) (proofB
 		L.Multiply(L, Lh)
 		L.Multiply(L, new(p256).ScalarMult(u, cL))
 		
-		
 		// Compute R = g[:n']^(a[n':]).h[n':]^(b[:n']).u^cR
 		R, _ = VectorExp(g[:nprime],a[nprime:]) 
 		Rh, _ = VectorExp(h[nprime:], b[:nprime])
@@ -849,7 +844,6 @@ func BIP(a,b []*big.Int, g,h []*p256, u,P *p256, n int64, Ls,Rs []*p256) (proofB
 
 		// Fiat-Shamir:
 		x, _, _ = HashBP(L, R)
-		//x = new(big.Int).SetInt64(1)
 		xinv = ModInverse(x, ORDER)
 
 		// Compute g' = g[:n']^(x^-1) * g[n':]^(x)
@@ -860,8 +854,6 @@ func BIP(a,b []*big.Int, g,h []*p256, u,P *p256, n int64, Ls,Rs []*p256) (proofB
 		hprime, _ = VectorScalarExp(h[:nprime], x)
 		hprime2, _ = VectorScalarExp(h[nprime:], xinv)
 		hprime, _ = VectorECAdd(hprime, hprime2)
-
-
 
 		// Compute P' = L^(x^2).P.R^(x^-2)
 		x2 = Mod(Multiply(x,x), ORDER)
@@ -883,7 +875,6 @@ func BIP(a,b []*big.Int, g,h []*p256, u,P *p256, n int64, Ls,Rs []*p256) (proofB
 		Rs = append(Rs, R)
 		// recursion BIP(g',h',u,P'; a', b')
 		proof, _ = BIP(aprime, bprime, gprime, hprime, u, Pprime, nprime, Ls, Rs)
-
 	}
 	proof.n = n
 	return proof, nil
@@ -909,7 +900,6 @@ func (zkip *bip) Verify(proof proofBip) (bool, error) {
 	for i < int64(logn) {
 		nprime = nprime / 2
 		x, _, _ = HashBP(proof.Ls[i], proof.Rs[i])
-		//x = new(big.Int).SetInt64(1)
 		xinv = ModInverse(x, ORDER)
 		// Compute g' = g[:n']^(x^-1) * g[n':]^(x)
 		ngprime, _ = VectorScalarExp(gprime[:nprime], xinv)
@@ -923,7 +913,6 @@ func (zkip *bip) Verify(proof proofBip) (bool, error) {
 		x2 = Mod(Multiply(x,x), ORDER)
 		x2inv = ModInverse(x2, ORDER)
 		Pprime.Multiply(Pprime, new(p256).ScalarMult(proof.Ls[i], x2))
-		//Pprime.Add(Pprime, Pprime)
 		Pprime.Multiply(Pprime, new(p256).ScalarMult(proof.Rs[i], x2inv))
 
 		i = i + 1

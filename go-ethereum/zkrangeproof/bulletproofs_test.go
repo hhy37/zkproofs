@@ -19,9 +19,9 @@ package zkrangeproof
 import (
 	"testing"
 	"math/big"
+	"crypto/rand"
 	"fmt"
 	"time" 
-	"crypto/rand"
 	"github.com/ing-bank/zkrangeproof/go-ethereum/crypto/bn256"
 )
 
@@ -236,7 +236,7 @@ func TestBulletproofsZKRP(t *testing.T) {
 	fmt.Println("Setup time:")
 	fmt.Println(setupTime.Sub(startTime))
 	
-	x := new(big.Int).SetInt64(4190967290)
+	x := new(big.Int).SetInt64(4294967295)
 	proof, _ := zkrp.Prove(x)
 	proofTime := time.Now()
 	fmt.Println("Proof time:")
@@ -254,13 +254,35 @@ func TestBulletproofsZKRP(t *testing.T) {
 	}
 }
 
-func BenchmarkScalarMult(b *testing.B) {
+func BenchmarkBulletproofs(b *testing.B) {
+	var (
+		zkrp bp
+		proof proofBP
+		ok bool
+	)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		a, _ := rand.Int(rand.Reader, bn256.Order)
-		A := new(bn256.G1).ScalarBaseMult(a)
-		fmt.Println("A:")
-		fmt.Println(A)
+		zkrp.Setup(0,4294967296) // ITS BEING USED TO COMPUTE N 
+		x := new(big.Int).SetInt64(4294967295)
+		proof, _ = zkrp.Prove(x)
+		ok, _ = zkrp.Verify(proof)
+		if ok != true {
+			b.Errorf("Assert failure: expected true, actual: %t", ok)
+		}
 	}
+}
+
+func BenchmarkScalarMult(b *testing.B) {
+	var (
+		a *big.Int
+		A *bn256.G1
+	)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		a, _ = rand.Int(rand.Reader, bn256.Order)
+		A = new(bn256.G1).ScalarBaseMult(a)
+	}
+	fmt.Println("A:")
+	fmt.Println(A)
 }
 

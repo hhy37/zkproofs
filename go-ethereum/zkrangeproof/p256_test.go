@@ -140,13 +140,15 @@ func TestMultiplyp256(t *testing.T) {
 }
 
 func BenchmarkScalarMultp256(b *testing.B) {
+	var (
+		A *p256
+	)
 	a := make([]byte, 32)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		rand.Read(a)
-		fmt.Println(a)
-		A := new(p256).ScalarBaseMult(new(big.Int).SetBytes(a))
-		fmt.Println("A:")
-		fmt.Println(A)
+		A = new(p256).ScalarBaseMult(new(big.Int).SetBytes(a))
 	}
+	fmt.Println("A:")
+	fmt.Println(A)
 }
