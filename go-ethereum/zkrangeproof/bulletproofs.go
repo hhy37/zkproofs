@@ -64,7 +64,7 @@ type proofBP struct {
 }
  
 /*
-vectorCopy returns a vector composed by copies of a.
+VectorCopy returns a vector composed by copies of a.
 */
 func VectorCopy(a *big.Int, n int64) ([]*big.Int, error) {
 	var (
@@ -81,7 +81,7 @@ func VectorCopy(a *big.Int, n int64) ([]*big.Int, error) {
 }
 
 /*
-vectorCopy returns a vector composed by copies of a.
+VectorCopy returns a vector composed by copies of a.
 */
 func VectorG1Copy(a *p256, n int64) ([]*p256, error) {
 	var (
@@ -737,7 +737,6 @@ func CommitInnerProduct(g,h []*p256, a,b []*big.Int) (*p256, error) {
 
 	ga, _ := VectorExp(g, a)
 	hb, _ := VectorExp(h, b)
-	//result = new(p256).Add(ga, hb)
 	result = new(p256).Multiply(ga, hb)
 	return result, nil
 }
