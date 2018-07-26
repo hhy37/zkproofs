@@ -19,10 +19,11 @@
 
 package com.ing.blockchain.zk;
 
+import com.ing.blockchain.zk.components.SecretOrderGroupGenerator;
 import com.ing.blockchain.zk.dto.Commitment;
 import com.ing.blockchain.zk.dto.SecretOrderGroup;
 import com.ing.blockchain.zk.dto.TTPMessage;
-import org.bouncycastle.util.BigIntegers;
+import com.ing.blockchain.zk.util.BigIntUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,13 +41,13 @@ public class TTPGenerator {
     public static final int s = 552;
 
     public static TTPMessage generateTTPMessage(BigInteger secretValue) {
-        System.out.println("Generating Secret Order Group.");
+        LOGGER.info("Generating Secret Order Group.");
         SecretOrderGroup group = new SecretOrderGroupGenerator().generate();
         return generateTTPMessage(secretValue, group);
     }
 
     public static TTPMessage generateTTPMessage(BigInteger secretValue, SecretOrderGroup group) {
-        System.out.println("Generating TTP Message");
+        LOGGER.info("Generating TTP Message");
 
         BigInteger secretRandom = TTPGenerator.generateKey(group.getN(), new SecureRandom());
         Commitment commitment = commit(group, secretValue, secretRandom);
@@ -74,10 +75,9 @@ public class TTPGenerator {
         return new Commitment(group, commitment);
     }
 
-    // Generate a random value between - 2(power s) * N + 1 and 2(power s) * N - 1.
+    // Generate a random value between - 2^s * N + 1 and 2^s * N - 1.
     // This range is used for generating commitment keys.
     public static BigInteger generateKey(BigInteger N, SecureRandom random) {
-        BigInteger integerMax = TWO.pow(s).multiply(N).subtract(ONE);
-        return BigIntegers.createRandomInRange(integerMax.negate(), integerMax, random);
+        return BigIntUtil.randomSignedInt(TWO.pow(s).multiply(N).subtract(ONE), random);
     }
 }

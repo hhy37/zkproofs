@@ -17,35 +17,30 @@
  *
  */
 
-package com.ing.blockchain.zk.util;
+package com.ing.blockchain.zk.dto;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.Serializable;
+import java.math.BigInteger;
 
-import java.util.function.Supplier;
+public class CFTProof implements Serializable {
 
-/**
- * Execution time measurement utility class.
- */
-public class TimerUtil {
+    private BigInteger C, D1, D2;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TimerUtil.class);
-
-    private TimerUtil() {
+    public CFTProof(BigInteger c, BigInteger D1, BigInteger D2) {
+        this.C = c;
+        this.D1 = D1; // Number that hides the secret value
+        this.D2 = D2; // Number that hides the random value in the commitment
     }
 
-    public static <T> T timeAndLog(final String phase, Supplier<T> supplier) {
-        final long startTime = System.nanoTime();
-        try {
-            return supplier.get();
-        } finally {
-            final long endTime = System.nanoTime();
-            final long millis = (endTime - startTime) / 1000000L;
-            logTime(phase, millis);
-        }
+    public BigInteger getC() {
+        return C;
     }
 
-    private static void logTime(String label, long millisElapsed) {
-        LOGGER.info(label + " took " + millisElapsed + " milliseconds");
+    public BigInteger getD1() {
+        return D1;
+    }
+
+    public BigInteger getD2() {
+        return D2;
     }
 }
