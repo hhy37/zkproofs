@@ -1,27 +1,32 @@
 ## Zero Knowledge Range Proof
 
-ING's zero knowledge range proof contract for Ethereum. This version is based on the Byzantium precompiles.
+This repository contains ING's Zero Knowledge Range Proof (ZKRP) contract for Ethereum. The current implementation is based on the paper "Efficient Proofs that a Committed Number Lies in an Interval" by Fabrice Boudot.  
 
-The current implementation is based on the paper "Efficient Proofs that a Committed Number Lies in an Interval" by Fabrice Boudot.
+Among the main benefits of using ZKRP it is possible remark the following:
 
-## Intro
+* ZKRP is significantly more efficient than generic Zero Knowledge Proofs, like is the case of zkSNARKS. 
+* ZKRP is being used to provide private transactions on Monero, zkLedger, Confidential Transactions and many others.    
+* Although ZKRP allows to construct private transactions, the size of the proof would make the size of transactions too big. Therefore in order to have practical solutions it is important to research efficient implementations of ZKRPs, and this is the main purpose of this repository.  
 
-One fundamental concern in blockchain technology is the confidentiality of the data on the blockchain. In order to reach consensus between all independent nodes in a blockchain network, each node must be able to validate all transactions (for instance against double-spend), in most cases this means that the content of the transactions is visible to all nodes. Fortunately several solutions exist that preserve confidentiality on a blockchain (private transactions, HyperLedger Fabric Channels, Payment Channels, Homomorphic encryption, transaction-mixing, zero knowledge proofs etc.). This article describes the implementation of a zero knowledge range proof in Ethereum.
 
-The zero knowledge range proof allows the blockchain network to validate that a secret number is within known limits without disclosing the secret number. This is useful to reach consensus in a variety of use cases:
+## Introduction 
+
+One fundamental concern in blockchain technology is the confidentiality of the data on the blockchain. In order to reach consensus between all independent nodes in a blockchain network, each node must be able to validate all transactions (for instance against double-spend), in most cases this means that the content of the transactions is visible to all nodes. Fortunately several solutions exist that preserve confidentiality on a blockchain (private transactions, HyperLedger Fabric Channels, Payment Channels, Homomorphic encryption, transaction-mixing, zero knowledge proofs etc.). This article describes the implementation of a Zero Knowledge Range Proof in Ethereum.
+
+The Zero Knowledge Range Proof allows the blockchain network to validate that a secret number is within known limits without disclosing the secret number. This is useful to reach consensus in a variety of use cases:
 
  * Validate that someone's age is between 18 and 65 without disclosing the age.
  * Validate that someone is in Europe without disclosing the exact location.
  * Validate that a payment-amount is positive without disclosing the amount (as done by Monero).
 
-The zero knowledge range proof requires a commitment on a number by a trusted party (for instance a government committing on someone's age), an Ethereum user can use this commitment to generate a range proof. The Ethereum network will verify this proof.
+The Zero Knowledge Range Proof requires a commitment on a number by a trusted party (for instance a government committing on someone's age), an Ethereum user can use this commitment to generate a range proof. The Ethereum network will verify this proof.
 
 
 ## Precompiled contract
 
-The range proof consists of 2 parts:
- * Generating the proof that a number is within an interval (outside the blockchain by the client that submits that proof)
- * Validating the proof that this number is within that interval (executed by each validating node on the blockchain)
+This version is based on the Byzantium precompiles. The range proof consists of 2 parts:
+ * Generating the proof that a number is within an interval (outside the blockchain by the client that submits that proof).
+ * Validating the proof that this number is within that interval (executed by each validating node on the blockchain).
 
 On Ethereum validation of transactions in smart contract logic is typically done in the Ethereum Virtual Machine. However the operations involved in the validation of this range-proof are too computationally expensive to run on the EVM. Therefore we call a precompiled contract during verification. A precompiled contract is written in the native language of the Ethereum-client (in our case in Golang) and is preconfigured to live at a specific address (with a low number). In our case we use the precompile bigModExp at address 0x5, which is available in Ethereum since the Byzantium release.
 
