@@ -148,11 +148,4 @@ which returns `true` iff the range proof is valid for this range and commitment.
 
 Please note that the variables `commitment` and `rangeProof` should be the comma separated combination of the `BigInteger` variables specified in this instruction. The commitment is only the first four variables of the TTPMessage.
 
-## Set Membership
-
-Zero Knowledge Set Membership is another interesting cryptographic gadget that can be used to solve important problems, e.g. KYC. For instance it allows to show that someone has knowledge of a secret element from a certain set. For example, it could be used to show that one lives in a country that belongs to the European Union, without revealing any information beyond that fact. 
-
-We implemented the scheme described in the paper "Efficient Protocols for Set Membership and Range Proofs", by Jan Camenisch, Rafik Chaabouni, abhi shelat, published in Asiacrypt 2008. However it is not yet integrated with Ethereum. In order to test it, go the 'go-ethereum/zkrangeproof/' folder and run 'go test'. 
-
-It is possible to compute ZK Range Proofs using ZK Set Membership, by defining the set to be the numeric interval for the ZKRP. 
 
