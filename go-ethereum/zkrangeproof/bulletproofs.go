@@ -34,6 +34,8 @@ import (
 
 var (
 	ORDER = CURVE.N 
+	SEEDH = "BulletproofsDoesNotNeedTrustedSetupH"
+	SEEDU = "BulletproofsDoesNotNeedTrustedSetupU"
 )
 
 /*
@@ -435,9 +437,7 @@ func (zkrp *bp) Setup(a,b int64) {
 	)
 	zkrp.G = new(p256).ScalarBaseMult(new(big.Int).SetInt64(1))
 	// TODO: change to avoid trusted setup
-	h := GetBigInt("18560948149108576432482904553159745978835170526553990798435819795989606410926")
-	//h = new(big.Int).SetInt64(0)
-	zkrp.H = new(p256).ScalarBaseMult(h)
+	zkrp.H, _ = MapToGroup(SEEDH)
 	zkrp.n = int64(math.Log2(float64(b)))
 	zkrp.g = make([]*p256, zkrp.n)
 	zkrp.h = make([]*p256, zkrp.n)
@@ -742,7 +742,7 @@ func CommitInnerProduct(g,h []*p256, a,b []*big.Int) (*p256, error) {
 }
 
 /*
-SetupInnerProduct is responsible for computing the basic parameters that are common to both
+Setup is responsible for computing the inner product basic parameters that are common to both
 Prove and Verify algorithms.
 */
 func (zkip *bip) Setup(H *p256, g,h []*p256, c *big.Int) (bip, error) {
@@ -753,8 +753,7 @@ func (zkip *bip) Setup(H *p256, g,h []*p256, c *big.Int) (bip, error) {
 	zkip.g = make([]*p256, zkip.n)
 	zkip.h = make([]*p256, zkip.n)
 	// TODO: not yet avoiding trusted setup...
-	ur := GetBigInt("18560948149108576432482904553159745978835170526553990798435819795989606410927")
-	zkip.u = new(p256).ScalarBaseMult(ur)
+	zkip.u, _ = MapToGroup(SEEDU)
 	zkip.H = H
 	zkip.g = g
 	zkip.h = h

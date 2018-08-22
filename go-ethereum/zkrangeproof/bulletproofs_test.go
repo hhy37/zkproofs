@@ -224,9 +224,9 @@ func TestInnerProduct(t *testing.T) {
 }
 
 /*
-Test teh ZK Range Proof scheme using Bulletproofs. 
+Test the TRUE case of ZK Range Proof scheme using Bulletproofs. 
 */
-func TestBulletproofsZKRP(t *testing.T) {
+func TestTrueBulletproofsZKRP(t *testing.T) {
 	var (
 		zkrp bp
 	)
@@ -250,6 +250,37 @@ func TestBulletproofsZKRP(t *testing.T) {
 	fmt.Println("Range Proofs result:")
 	fmt.Println(ok)
 	if ok != true {
+		t.Errorf("Assert failure: expected true, actual: %t", ok)
+	}
+}
+
+/*
+Test the FALSE case of ZK Range Proof scheme using Bulletproofs. 
+*/
+func TestFalseBulletproofsZKRP(t *testing.T) {
+	var (
+		zkrp bp
+	)
+	startTime := time.Now()
+	zkrp.Setup(0,4294967296) // ITS BEING USED TO COMPUTE N 
+	setupTime := time.Now()
+	fmt.Println("Setup time:")
+	fmt.Println(setupTime.Sub(startTime))
+	
+	x := new(big.Int).SetInt64(4294967296)
+	proof, _ := zkrp.Prove(x)
+	proofTime := time.Now()
+	fmt.Println("Proof time:")
+	fmt.Println(proofTime.Sub(setupTime))
+
+	ok, _ := zkrp.Verify(proof)
+	verifyTime := time.Now()
+	fmt.Println("Verify time:")
+	fmt.Println(verifyTime.Sub(proofTime))
+	
+	fmt.Println("Range Proofs invalid test result:")
+	fmt.Println(ok)
+	if ok != false {
 		t.Errorf("Assert failure: expected true, actual: %t", ok)
 	}
 }

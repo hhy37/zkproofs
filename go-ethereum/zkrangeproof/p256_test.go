@@ -4,10 +4,8 @@ package zkrangeproof
 import (
 	"crypto/rand"
 	"testing"
-
 	"fmt"
 	"math/big"
-
 	"github.com/ing-bank/zkrangeproof/go-ethereum/crypto/secp256k1"
 )
 
@@ -123,7 +121,6 @@ func TestScalarBaseMult(t *testing.T) {
 func TestMultiplyp256(t *testing.T) {
 	a := new(big.Int).SetInt64(2)
 	p := new(p256).ScalarBaseMult(a)
-	//p := &p256{X:Ax, Y:Ay}
 	fmt.Println("p:")
 	fmt.Println(p)
 	P1 := &p256{X:GX, Y:GY}
@@ -139,6 +136,20 @@ func TestMultiplyp256(t *testing.T) {
 	
 }
 
+func TestMapToGroup(t *testing.T) {
+	curve := secp256k1.S256()
+	m := "Testing Hash-to-point function8"
+	p, _ := MapToGroup(m)
+	fmt.Println("p:")
+	fmt.Println(p)
+	fmt.Println("Is On Curve:")
+	fmt.Println(p.IsOnCurve())
+	p.ScalarMult(p, curve.N)
+	fmt.Println("p:")
+	fmt.Println(p)
+}
+
+
 func BenchmarkScalarMultp256(b *testing.B) {
 	var (
 		A *p256
@@ -152,3 +163,6 @@ func BenchmarkScalarMultp256(b *testing.B) {
 	fmt.Println("A:")
 	fmt.Println(A)
 }
+
+
+

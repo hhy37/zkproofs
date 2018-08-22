@@ -14,6 +14,13 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
+/*
+This file contains the implementation of the BB signature scheme proposed in the paper:
+Short signatures without random oracle
+Boneh and Boyen
+Eurocrypt 2004
+*/
+
 package zkrangeproof
 
 import (
