@@ -26,13 +26,23 @@ package secp256k1
 #define USE_SCALAR_8X32
 #define USE_SCALAR_INV_BUILTIN
 #define NDEBUG
+#define ENABLE_MODULE_GENERATOR
+#define ENABLE_MODULE_BULLETPROOF
+#define SECP256K1_MODULE_BULLETPROOF_TESTS
 #include "./libsecp256k1/src/secp256k1.c"
 #include "./libsecp256k1/src/modules/recovery/main_impl.h"
+#include "./libsecp256k1/src/bench_bulletproof.c"
+#include "./libsecp256k1/src/modules/bulletproofs/tests_impl.h"
 #include "ext.h"
 
 typedef void (*callbackFunc) (const char* msg, void* data);
 extern void secp256k1GoPanicIllegal(const char* msg, void* data);
 extern void secp256k1GoPanicError(const char* msg, void* data);
+extern void test_rangeproof();
+extern void setup_rangeproof(zkrp_t *dt);
+extern void commit_rangeproof(zkrp_t *dt);
+extern void prove_rangeproof(zkrp_t *dt);
+extern int verify_rangeproof(zkrp_t *dt);
 */
 import "C"
 
@@ -127,4 +137,43 @@ func checkSignature(sig []byte) error {
 		return ErrInvalidRecoveryID
 	}
 	return nil
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+// Rangeproofs functions: should be separated from this file in the near future
+////////////////////////////////////////////////////////////////////////////////////
+
+func RunRangeproof() {
+	C.test_rangeproof()
+}
+
+func SetupRangeproof(nbits _Ctype_ulong) (*C.zkrp_t) {
+	var dt *C.zkrp_t
+	dt = new(C.zkrp_t)
+	dt.nbits = nbits
+	C.setup_rangeproof(dt)
+	//runtime.KeepAlive(unsafe.Pointer(bdt))
+	//runtime.KeepAlive(unsafe.Pointer(bdt.proof))
+	return dt
+}
+
+func CommitRangeproof(dt *C.zkrp_t) {
+	C.commit_rangeproof(dt)
+}
+
+// NOTE: -gcflags='-m' : can inline cbuf : inlining call to cbuf
+func cbuf(buf []byte) (size C.size_t, ptr *C.uchar) {
+    var bufptr *byte
+    if cap(buf) > 0 {
+        bufptr = &(buf[:1][0])
+    }
+    return C.size_t(len(buf)), (*C.uchar)(bufptr)
+}
+
+func ProveRangeproof(dt *C.zkrp_t) {
+	C.prove_rangeproof(dt)
+}
+
+func VerifyRangeproof(dt *C.zkrp_t) (bool) {
+	return (C.verify_rangeproof(dt) == 1)
 }

@@ -26,6 +26,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto/randentropy"
+	"fmt"
 )
 
 const TestCount = 1000
@@ -215,6 +216,16 @@ func TestRecoverSanity(t *testing.T) {
 	if !bytes.Equal(pubkey1, pubkey2) {
 		t.Errorf("pubkey mismatch: want: %x have: %x", pubkey1, pubkey2)
 	}
+}
+
+func TestRangeproof(t *testing.T) {
+	RunRangeproof()
+	dt := SetupRangeproof(8)
+	CommitRangeproof(dt)
+	ProveRangeproof(dt)
+	result := VerifyRangeproof(dt)
+	fmt.Println("result:")
+	fmt.Println(result)
 }
 
 func BenchmarkSign(b *testing.B) {
