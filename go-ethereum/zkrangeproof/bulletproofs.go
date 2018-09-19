@@ -702,7 +702,7 @@ type proofBip struct {
 }
 
 /*
-Hash is responsible for the computing a Zp element given elements from GT and G1.
+HashIP is responsible for the computing a Zp element given elements from GT and G1.
 */
 func HashIP(g,h []*p256, P *p256, c *big.Int, n int64) (*big.Int, error) {
 	var (
@@ -764,7 +764,7 @@ func (zkip *bip) Setup(H *p256, g,h []*p256, c *big.Int) (bip, error) {
 
 
 /*
-InnerProductProve is responsible for the generation of the Inner Product Proof.
+Prove is responsible for the generation of the Inner Product Proof.
 */
 func (zkip *bip) Prove(a,b []*big.Int, P *p256) (proofBip, error) {
 	var (
@@ -879,7 +879,7 @@ func BIP(a,b []*big.Int, g,h []*p256, u,P *p256, n int64, Ls,Rs []*p256) (proofB
 }
 
 /* 
-InnerProduct is responsible for the verification of the Inner Product Proof. 
+Verify is responsible for the verification of the Inner Product Proof. 
 */
 func (zkip *bip) Verify(proof proofBip) (bool, error) {
 	
