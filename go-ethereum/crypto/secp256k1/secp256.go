@@ -157,6 +157,10 @@ func SetupRangeproof(nbits _Ctype_ulong) (*C.zkrp_t) {
 	return dt
 }
 
+func PrintRangeproof(dt *C.zkrp_t) {
+	C.myprint(C.CString("GO print"), dt)
+}
+
 func CommitRangeproof(dt *C.zkrp_t) {
 	C.commit_rangeproof(dt)
 }

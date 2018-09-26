@@ -164,9 +164,10 @@ void myverify_rangeproof(zkrp_t *dt) {
 	CHECK(secp256k1_bulletproof_rangeproof_verify(dt->ctx_both, dt->scratch, dt->gens, dt->proof, dt->plen, NULL, dt->pcommit, 1, dt->nbits, &(dt->value_gen), NULL, 0) == 1);
 }
 
-void myprint(zkrp_t *dt) {
+void myprint(char *message, zkrp_t *dt) {
     int i, len;
     len = (int) dt->plen; 
+    printf("==================   %s   =================\n", message);
     printf("DT: %p\n", dt);
     printf("DT->nbits: %zd\n", dt->nbits);
     printf("DT->ctx_none: %p\n", dt->ctx_none);
@@ -182,8 +183,6 @@ void myprint(zkrp_t *dt) {
     printf("]\n");
     printf("DT->plen: %zd\n", dt->plen);
     printf("DT->value: %p\n", dt->value);
-    printf("DT->blind_ptr: %p\n", dt->blind_ptr);
-    //printf("DT->value_gen: %p\n", dt->value_gen);
     printf("DT->blind: %p\n", dt->blind);
     printf("DT->pcommit: %p\n", dt->pcommit);
 }
@@ -208,58 +207,64 @@ void setup_rangeproof(zkrp_t *dt) {
     dt->value_gen = value_gen;
 }
 
-
-// commit should receive parameters and value as input
-// and output the commitment
-void commit_rangeproof(zkrp_t *dt) {
-    secp256k1_bulletproof_generators *gens;
-    const unsigned char blind[32] = "   i am not a blinding factor   ";
-    const unsigned char *blind_ptr[1];
-    secp256k1_pedersen_commitment pcommit[1];
-    uint64_t value[1] = { 255 };
-    int32_t ecount = 0;
-    unsigned char proof[2000];
-    const unsigned char *proof_ptr = proof;
-    size_t plen = sizeof(proof);
-    
-    blind_ptr[0] = blind;
-
-    CHECK(secp256k1_pedersen_commit(dt->ctx_both, &pcommit[0], blind, value[0], &(dt->value_gen), &secp256k1_generator_const_h) != 0);
-    
-    gens = secp256k1_bulletproof_generators_create(dt->ctx_none, &secp256k1_generator_const_h, 256);
-    CHECK(gens != NULL && ecount == 0);
-    
-    dt->gens = gens;
-    dt->proof = proof;
-    dt->plen = plen;
-    dt->value = value;
-    dt->blind_ptr = blind_ptr;
-    dt->blind = blind;
-    dt->pcommit = pcommit;
-    
-    myprove_rangeproof(dt);
-    myprint(dt);
-    myverify_rangeproof(dt);
+void deallocate_memory(zkrp_t *dt) {
+    // TODO realloc everything....
 }
 
 
 // prove should receive as input parameters and the commitment
 // and output the proof
 void prove_rangeproof(zkrp_t *dt) {
-	printf("%d\n", (secp256k1_bulletproof_rangeproof_prove(dt->ctx_both, dt->scratch, dt->gens, dt->proof, &(dt->plen), dt->value, NULL, dt->blind_ptr, 1, &(dt->value_gen), dt->nbits, dt->blind, NULL, 0) == 1));
+	printf("Prove result: %d\n", (secp256k1_bulletproof_rangeproof_prove(dt->ctx_both, dt->scratch, dt->gens, dt->proof, &(dt->plen), dt->value, NULL, dt->blind_ptr, 1, &(dt->value_gen), dt->nbits, dt->blind, NULL, 0) == 1));
 	//CHECK(secp256k1_bulletproof_rangeproof_prove(dt->ctx, dt->scratch, dt->gens, dt->proof, &(dt->plen), dt->value, NULL, dt->blind_ptr, 1, &(dt->value_gen), dt->nbits, dt->blind, NULL, 0) == 1);
-    
+
 	//myprove_rangeproof(dt);
 	//myverify_rangeproof(dt);
-	myprint(dt);
+//	myprint("PROVE", dt);
 }
 
 // verify should receive as input parameters and proof
 // and output true or false
 int verify_rangeproof(zkrp_t *dt) {
-	myprint(dt);
-	printf("%d\n", (secp256k1_bulletproof_rangeproof_verify(dt->ctx_both, dt->scratch, dt->gens, dt->proof, dt->plen, NULL, dt->pcommit, 1, dt->nbits, &(dt->value_gen), NULL, 0) == 1));
+//	myprint("VERIFY", dt);
+	printf("Verification result: %d\n", (secp256k1_bulletproof_rangeproof_verify(dt->ctx_both, dt->scratch, dt->gens, dt->proof, dt->plen, NULL, dt->pcommit, 1, dt->nbits, &(dt->value_gen), NULL, 0) == 1));
 	//CHECK(secp256k1_bulletproof_rangeproof_verify(dt->ctx_both, dt->scratch, dt->gens, dt->proof, dt->plen, NULL, dt->pcommit, 1, dt->nbits, &(dt->value_gen), NULL, 0) == 1);
 	//return (secp256k1_bulletproof_rangeproof_verify(dt->ctx_both, dt->scratch, dt->gens, dt->proof, dt->plen, NULL, dt->pcommit, 1, dt->nbits, &(dt->value_gen), NULL, 0) == 1);
 	return 1;
 }
+
+// commit should receive parameters and value as input
+// and output the commitment
+void commit_rangeproof(zkrp_t *dt) {
+    secp256k1_bulletproof_generators *gens;
+    const unsigned char* blind = (unsigned char*)malloc(32); // TODO "   i am not a blinding factor   ";
+    const unsigned char **blind_ptr = malloc(sizeof(unsigned char*));
+    secp256k1_pedersen_commitment *pcommit = malloc(sizeof(secp256k1_pedersen_commitment));
+    uint64_t* value = (uint64_t*)malloc(sizeof(uint64_t*));
+    *value = 255;
+
+    CHECK(secp256k1_pedersen_commit(dt->ctx_both, pcommit, blind, *value, &(dt->value_gen), &secp256k1_generator_const_h) != 0);
+    
+    gens = secp256k1_bulletproof_generators_create(dt->ctx_none, &secp256k1_generator_const_h, 256);
+    CHECK(gens != NULL);
+    
+    dt->gens = gens;
+    dt->proof = (unsigned char*)malloc(2000);
+    dt->plen = 2000;
+    dt->value = value;
+    dt->blind_ptr = blind_ptr;
+    dt->blind = blind;
+    dt->pcommit = pcommit;
+
+//    myprint("COMMIT", dt);
+
+    prove_rangeproof(dt);
+
+//    myprint("PRE-VERIFY", dt);
+
+    verify_rangeproof(dt);
+
+//    myprint("POST-VERIFY", dt);
+
+}
+
