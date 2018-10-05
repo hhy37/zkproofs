@@ -182,7 +182,7 @@ void myprint(char *message, zkrp_t *dt) {
     }
     printf("]\n");
     printf("DT->plen: %zd\n", dt->plen);
-    printf("DT->value: %d\n", dt->value);
+    printf("DT->value: %lu\n", dt->value);
     printf("DT->blind: %p\n", dt->blind);
     printf("DT->pcommit: %p\n", dt->pcommit);
 }
@@ -196,15 +196,21 @@ void setup_rangeproof(zkrp_t *dt) {
     secp256k1_context *none = secp256k1_context_create(SECP256K1_CONTEXT_NONE);
     secp256k1_context *both = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
     secp256k1_scratch *scratch = secp256k1_scratch_space_create(both, 1024 * 1024);
-    secp256k1_generator *value_gen = malloc(sizeof(secp256k1_pedersen_commitment));
-    const unsigned char blind[32] = "   i am not a blinding factor   ";
-    
-    CHECK(secp256k1_generator_generate(both, value_gen, blind) != 0);
-   
-    dt->ctx_none = none;
-    dt->ctx_both = both;
-    dt->scratch = scratch;
-    dt->value_gen = value_gen;
+    secp256k1_generator *value_gen = malloc(sizeof(secp256k1_generator));
+    unsigned char blind[32] = "   i am not a blinding factor   ";
+
+        dt->ctx_none = none;
+        dt->ctx_both = both;
+        dt->scratch = scratch;
+        dt->value_gen = value_gen;
+
+        dt->blind = (unsigned char*)malloc(sizeof(unsigned char) * 32);
+        strncpy(blind, dt->blind, 32);
+
+        dt->blind_ptr = malloc(sizeof(unsigned char*));
+        dt->blind_ptr[0] = dt->blind;
+
+    CHECK(secp256k1_generator_generate(dt->ctx_both, dt->value_gen, dt->blind) != 0);
 }
 
 void deallocate_memory(zkrp_t *dt) {
@@ -237,12 +243,10 @@ int verify_rangeproof(zkrp_t *dt) {
 // and output the commitment
 void commit_rangeproof(zkrp_t *dt) {
     secp256k1_bulletproof_generators *gens;
-    const unsigned char* blind = (unsigned char*)malloc(32); // TODO "   i am not a blinding factor   ";
-    const unsigned char **blind_ptr = malloc(sizeof(unsigned char*));
     secp256k1_pedersen_commitment *pcommit = malloc(sizeof(secp256k1_pedersen_commitment));
     uint64_t value = 255;
 
-    CHECK(secp256k1_pedersen_commit(dt->ctx_both, pcommit, blind, value, dt->value_gen, &secp256k1_generator_const_h) != 0);
+    CHECK(secp256k1_pedersen_commit(dt->ctx_both, pcommit, dt->blind, value, dt->value_gen, &secp256k1_generator_const_h) != 0);
     
     gens = secp256k1_bulletproof_generators_create(dt->ctx_none, &secp256k1_generator_const_h, 256);
     CHECK(gens != NULL);
@@ -251,8 +255,6 @@ void commit_rangeproof(zkrp_t *dt) {
     dt->proof = (unsigned char*)malloc(2000);
     dt->plen = 2000;
     dt->value = value;
-    dt->blind_ptr = blind_ptr;
-    dt->blind = blind;
     dt->pcommit = pcommit;
 
 //    myprint("COMMIT", dt);
