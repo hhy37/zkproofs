@@ -259,11 +259,11 @@ void commit_rangeproof(zkrp_t *dt) {
 
 //    myprint("COMMIT", dt);
 
-    prove_rangeproof(dt);
+//    prove_rangeproof(dt);
 
 //    myprint("PRE-VERIFY", dt);
 
-    verify_rangeproof(dt);
+//    verify_rangeproof(dt);
 
 //    myprint("POST-VERIFY", dt);
 

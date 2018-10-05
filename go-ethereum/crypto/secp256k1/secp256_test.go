@@ -18,6 +18,7 @@ package secp256k1
 
 import (
 	"testing"
+	"fmt"
 )
 
 //const TestCount = 1000
@@ -213,10 +214,10 @@ func TestRangeproof(t *testing.T) {
 	RunRangeproof()
 	dt := SetupRangeproof(8)
 	CommitRangeproof(dt)
-	//ProveRangeproof(dt)
-	//result := VerifyRangeproof(dt)
-	//fmt.Println("result:")
-	//fmt.Println(result)
+	ProveRangeproof(dt)
+	result := VerifyRangeproof(dt)
+	fmt.Println("result:")
+	fmt.Println(result)
 }
 
 //func TestMemoryAllocation(t *testing.T) {
