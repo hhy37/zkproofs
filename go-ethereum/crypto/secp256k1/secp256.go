@@ -152,8 +152,6 @@ func SetupRangeproof(nbits _Ctype_ulong) (*C.zkrp_t) {
 	dt = new(C.zkrp_t)
 	dt.nbits = nbits
 	C.setup_rangeproof(dt)
-	//runtime.KeepAlive(unsafe.Pointer(bdt))
-	//runtime.KeepAlive(unsafe.Pointer(bdt.proof))
 	return dt
 }
 
@@ -163,15 +161,6 @@ func PrintRangeproof(dt *C.zkrp_t) {
 
 func CommitRangeproof(dt *C.zkrp_t) {
 	C.commit_rangeproof(dt)
-}
-
-// NOTE: -gcflags='-m' : can inline cbuf : inlining call to cbuf
-func cbuf(buf []byte) (size C.size_t, ptr *C.uchar) {
-    var bufptr *byte
-    if cap(buf) > 0 {
-        bufptr = &(buf[:1][0])
-    }
-    return C.size_t(len(buf)), (*C.uchar)(bufptr)
 }
 
 func ProveRangeproof(dt *C.zkrp_t) {

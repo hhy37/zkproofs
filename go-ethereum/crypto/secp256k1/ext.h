@@ -156,14 +156,6 @@ typedef struct {
 	secp256k1_pedersen_commitment *pcommit;
 } zkrp_t;
 
-void myprove_rangeproof(zkrp_t *dt) {
-	CHECK(secp256k1_bulletproof_rangeproof_prove(dt->ctx_both, dt->scratch, dt->gens, dt->proof, &(dt->plen), &(dt->value), NULL, dt->blind_ptr, 1, dt->value_gen, dt->nbits, dt->blind, NULL, 0) == 1);
-}
-
-void myverify_rangeproof(zkrp_t *dt) {
-	CHECK(secp256k1_bulletproof_rangeproof_verify(dt->ctx_both, dt->scratch, dt->gens, dt->proof, dt->plen, NULL, dt->pcommit, 1, dt->nbits, dt->value_gen, NULL, 0) == 1);
-}
-
 void myprint(char *message, zkrp_t *dt) {
     int i, len;
     len = (int) dt->plen; 
@@ -222,20 +214,12 @@ void deallocate_memory(zkrp_t *dt) {
 // and output the proof
 void prove_rangeproof(zkrp_t *dt) {
 	printf("Prove result: %d\n", (secp256k1_bulletproof_rangeproof_prove(dt->ctx_both, dt->scratch, dt->gens, dt->proof, &(dt->plen), &(dt->value), NULL, dt->blind_ptr, 1, dt->value_gen, dt->nbits, dt->blind, NULL, 0) == 1));
-	//CHECK(secp256k1_bulletproof_rangeproof_prove(dt->ctx, dt->scratch, dt->gens, dt->proof, &(dt->plen), dt->value, NULL, dt->blind_ptr, 1, &(dt->value_gen), dt->nbits, dt->blind, NULL, 0) == 1);
-
-	//myprove_rangeproof(dt);
-	//myverify_rangeproof(dt);
-//	myprint("PROVE", dt);
 }
 
 // verify should receive as input parameters and proof
 // and output true or false
 int verify_rangeproof(zkrp_t *dt) {
-//	myprint("VERIFY", dt);
 	printf("Verification result: %d\n", (secp256k1_bulletproof_rangeproof_verify(dt->ctx_both, dt->scratch, dt->gens, dt->proof, dt->plen, NULL, dt->pcommit, 1, dt->nbits, dt->value_gen, NULL, 0) == 1));
-	//CHECK(secp256k1_bulletproof_rangeproof_verify(dt->ctx_both, dt->scratch, dt->gens, dt->proof, dt->plen, NULL, dt->pcommit, 1, dt->nbits, &(dt->value_gen), NULL, 0) == 1);
-	//return (secp256k1_bulletproof_rangeproof_verify(dt->ctx_both, dt->scratch, dt->gens, dt->proof, dt->plen, NULL, dt->pcommit, 1, dt->nbits, &(dt->value_gen), NULL, 0) == 1);
 	return 1;
 }
 
@@ -244,6 +228,7 @@ int verify_rangeproof(zkrp_t *dt) {
 void commit_rangeproof(zkrp_t *dt) {
     secp256k1_bulletproof_generators *gens;
     secp256k1_pedersen_commitment *pcommit = malloc(sizeof(secp256k1_pedersen_commitment));
+    // TODO: value as input
     uint64_t value = 255;
 
     CHECK(secp256k1_pedersen_commit(dt->ctx_both, pcommit, dt->blind, value, dt->value_gen, &secp256k1_generator_const_h) != 0);
@@ -256,16 +241,5 @@ void commit_rangeproof(zkrp_t *dt) {
     dt->plen = 2000;
     dt->value = value;
     dt->pcommit = pcommit;
-
-//    myprint("COMMIT", dt);
-
-//    prove_rangeproof(dt);
-
-//    myprint("PRE-VERIFY", dt);
-
-//    verify_rangeproof(dt);
-
-//    myprint("POST-VERIFY", dt);
-
 }
 
