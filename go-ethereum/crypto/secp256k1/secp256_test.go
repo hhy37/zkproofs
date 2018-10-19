@@ -19,6 +19,7 @@ package secp256k1
 import (
 	"testing"
 	"fmt"
+	"time"
 )
 
 //const TestCount = 1000
@@ -212,10 +213,23 @@ import (
 
 func TestRangeproof(t *testing.T) {
 	RunRangeproof()
-	dt := SetupRangeproof(8)
+	startTime := time.Now()
+	dt := SetupRangeproof(32)
+	setupTime := time.Now()
+	fmt.Println("Setup time:")
+	fmt.Println(setupTime.Sub(startTime))
 	CommitRangeproof(dt)
+	commitTime := time.Now()
+	fmt.Println("Commit time:")
+	fmt.Println(commitTime.Sub(setupTime))
 	ProveRangeproof(dt)
+	proveTime := time.Now()
+	fmt.Println("Prove time:")
+	fmt.Println(proveTime.Sub(commitTime))
 	result := VerifyRangeproof(dt)
+	verifyTime := time.Now()
+	fmt.Println("Verify time:")
+	fmt.Println(verifyTime.Sub(proveTime))
 	fmt.Println("result:")
 	fmt.Println(result)
 }

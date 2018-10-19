@@ -20,6 +20,7 @@ import (
 	"testing"
 	"math/big"
 	"fmt"
+	"time"
 	)
 
 
@@ -167,9 +168,19 @@ func GetValidCommitment() []*big.Int {
 func TestValidRangeProof(t *testing.T) {
 	lowerBound := new (big.Int).SetInt64(1991)
 	upperBound := new (big.Int).SetInt64(2000)
+	startTime := time.Now()
 	commitment := GetValidCommitment()
+	commitTime := time.Now()
+	fmt.Println("Commit time:")
+	fmt.Println(commitTime.Sub(startTime))
 	proof := GetValidProof()
+	proofTime := time.Now()
+	fmt.Println("Get Proof time:")
+	fmt.Println(proofTime.Sub(commitTime))
 	if (ValidateRangeProof(lowerBound, upperBound, commitment, proof)) {
+		verifyTime := time.Now()
+		fmt.Println("Verify time:")
+		fmt.Println(verifyTime.Sub(proofTime))
 		t.Log("ValidateRangeProof pass")
 		if (!ValidateRangeProof(lowerBound, upperBound, commitment, proof)) {
 			t.Error("First verification passed, second failed")

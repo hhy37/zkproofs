@@ -63,6 +63,7 @@ type proofBP struct {
 	mu *big.Int
 	tprime *big.Int
 	proofip proofBip
+	commit *p256
 }
  
 /*
@@ -346,6 +347,7 @@ func HashBP(A, S *p256) (*big.Int, *big.Int, error) {
 	digest2 := sha256.New()
 	digest2.Write([]byte(S.String()))
 	digest2.Write([]byte(A.String()))
+	digest2.Write([]byte(result1.String()))
 	output2 := digest2.Sum(nil)
 	tmp2 := output2[0: len(output2)]
 	result2, err2 := byteconversion.FromByteArray(tmp2)
@@ -360,8 +362,6 @@ func HashBP(A, S *p256) (*big.Int, *big.Int, error) {
 
 /*
 Commitvector computes a commitment to the bit of the secret. 
-TODO: Maybe the common interface could have Commit method, but must take care of the different 
-secret types though...
 */
 func CommitVector(aL,aR []int64, alpha *big.Int, G,H *p256, g,h []*p256, n int64) (*p256, error) {
 	var (
@@ -428,15 +428,13 @@ func (zkrp *bp) Delta(y, z *big.Int) (*big.Int, error) {
 }
 
 /* 
-Setup is responsible for computing the common parameter. 
-This is STILL a trusted setup.
+Setup is responsible for computing the common parameters. 
 */
 func (zkrp *bp) Setup(a,b int64) {
 	var (
 		i int64
 	)
 	zkrp.G = new(p256).ScalarBaseMult(new(big.Int).SetInt64(1))
-	// TODO: change to avoid trusted setup
 	zkrp.H, _ = MapToGroup(SEEDH)
 	zkrp.n = int64(math.Log2(float64(b)))
 	zkrp.g = make([]*p256, zkrp.n)
@@ -594,7 +592,6 @@ func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
 	commit, _ := CommitInnerProduct(zkrp.g, hprime, bl, br)
 	proofip, _ := zkrp.zkip.Prove(bl, br, commit)	
 
-	// Remove unnecessary variables
 	proof.V = V
 	proof.A = A
 	proof.S = S
@@ -604,6 +601,7 @@ func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
  	proof.mu = mu
 	proof.tprime = tprime
 	proof.proofip = proofip
+	proof.commit = commit
 
 	return proof, nil
 }
@@ -663,10 +661,54 @@ func (zkrp *bp) Verify (proof proofBP) (bool, error) {
 	rhs.Multiply(rhs, lhs)
 	c65 := rhs.IsZero() // Condition (65), page 20, from eprint version
 
+	// Compute P - lhs  #################### Condition (66) ######################
+
+	// S^x
+	Sx := new(p256).ScalarMult(proof.S, x)
+	// A.S^x
+	ASx := new(p256).Add(proof.A, Sx)
+
+	// g^-z
+	mz := Sub(ORDER, z)
+	vmz, _ := VectorCopy(mz, zkrp.n)
+	gpmz, _ := VectorExp(zkrp.g, vmz)
+
+	// z.y^n
+	vz, _ := VectorCopy(z, zkrp.n)
+	vy, _ := PowerOf(y, zkrp.n) 
+	zyn, _ := VectorMul(vy, vz) 
+
+	p2n, _ := PowerOf(new(big.Int).SetInt64(2), zkrp.n)
+	zsquared := Multiply(z, z)
+	z22n, _ := VectorScalarMul(p2n, zsquared)
+
+	// z.y^n + z^2.2^n
+	zynz22n, _ := VectorAdd(zyn, z22n) 
+	
+	lP := new(p256)
+	lP.Add(ASx, gpmz)
+	
+	// h'^(z.y^n + z^2.2^n)
+	hprimeexp, _ := VectorExp(hprime, zynz22n)
+
+	lP.Add(lP, hprimeexp)
+
+	// Compute P - rhs  #################### Condition (67) ######################
+
+	// h^mu
+	rP := new(p256).ScalarMult(zkrp.H, proof.mu)
+	rP.Multiply(rP, proof.commit)
+	
+	// Subtract lhs and rhs and compare with poitn at infinity
+	lP = lP.Neg(lP)
+	rP.Add(rP, lP)
+	c67 := rP.IsZero() 
+
+
 	// Verify Inner Product Proof ################################################
 	ok, _ := zkrp.zkip.Verify(proof.proofip)
 
-	result := c65 && ok
+	result := c65 && c67 && ok
 
 	return result, nil
 }
@@ -728,7 +770,7 @@ func HashIP(g,h []*p256, P *p256, c *big.Int, n int64) (*big.Int, error) {
 }
 
 /*
-CommitinnerProduct is responsible for calculating g^a.h^b.
+CommitInnerProduct is responsible for calculating g^a.h^b.
 */
 func CommitInnerProduct(g,h []*p256, a,b []*big.Int) (*p256, error) {
 	var (
@@ -752,7 +794,6 @@ func (zkip *bip) Setup(H *p256, g,h []*p256, c *big.Int) (bip, error) {
 	
 	zkip.g = make([]*p256, zkip.n)
 	zkip.h = make([]*p256, zkip.n)
-	// TODO: not yet avoiding trusted setup...
 	zkip.u, _ = MapToGroup(SEEDU)
 	zkip.H = H
 	zkip.g = g
@@ -773,21 +814,21 @@ func (zkip *bip) Prove(a,b []*big.Int, P *p256) (proofBip, error) {
 		Ls []*p256 
 		Rs []*p256 
 	)
-
-	// Fiat-Shamir:
-	// x = Hash(g,h,P,c)
-	x, _ := HashIP(zkip.g, zkip.h, P, zkip.c, zkip.n)
-	// Pprime = P.u^(x.c)		
-	ux := new(p256).ScalarMult(zkip.u, x)  
-	uxc := new(p256).ScalarMult(ux, zkip.c)  
-	P.Multiply(P, uxc)
+	
 	n = int64(len(a))
 	m = int64(len(b))
 	if (n != m) {
 		return proof, errors.New("Size of first array argument must be equal to the second")
 	} else {
+		// Fiat-Shamir:
+		// x = Hash(g,h,P,c)
+		x, _ := HashIP(zkip.g, zkip.h, P, zkip.c, zkip.n)
+		// Pprime = P.u^(x.c)		
+		ux := new(p256).ScalarMult(zkip.u, x)  
+		uxc := new(p256).ScalarMult(ux, zkip.c)  
+		PP := new(p256).Multiply(P, uxc)
 		// Execute Protocol 2 recursively
-		zkip.P = P
+		zkip.P = PP
 		proof, err := BIP(a, b, zkip.g, zkip.h, ux, zkip.P, n, Ls, Rs)
 		return proof, err
 	}

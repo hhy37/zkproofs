@@ -373,7 +373,7 @@ func (zkrp *ccs08) Setup(a,b int64) (error) {
 	if logb != 0 {
 		// TODO: understand how to find optimal parameters
 		//u = b / int64(logb)
-		u = 100
+		u = 57
 		if u != 0 {
 			l = 0
 			for i:=b; i>0; i=i/u {
