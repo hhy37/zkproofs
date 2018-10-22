@@ -1,14 +1,22 @@
 ## Zero Knowledge Range Proof and Set Membership
 
-This repository contains ING's Zero Knowledge Range Proof (ZKRP) contract for Ethereum. The current implementation is based on the paper "Efficient Proofs that a Committed Number Lies in an Interval" by Fabrice Boudot.  
+This repository contains ING's Zero Knowledge Range Proof (ZKRP) and Zero Knowledge Set Membership (ZKSM) protocols. The current implementation of the Ethereum smart contract is based on the paper "Efficient Proofs that a Committed Number Lies in an Interval" by Fabrice Boudot. The repository also contains the implementation of the paper "Efficient protocols for set membership and range proofs", by Jan Camenisch, Rafik Chaabouni and abhi shelat. 
 
-Among the main benefits of using ZKRP it is possible remark the following:
+Among the main benefits of using ZKRP and ZKSM it is possible remark the following:
 
-* ZKRP is significantly more efficient than generic Zero Knowledge Proofs, like is the case of zkSNARKS. 
-* ZKRP is being used to provide private transactions on Monero, zkLedger, Confidential Transactions and many others.    
-* Although ZKRP allows to construct private transactions, the size of the proof would make the size of transactions too big. Therefore in order to have practical solutions it is important to research efficient implementations of ZKRPs, and this is the main purpose of this repository.  
+* they are significantly more efficient than generic Zero Knowledge Proofs, like is the case of zkSNARKS. 
+* they have being used to provide private transactions on Monero, zkLedger, Confidential Transactions and many others.    
+* Although ZKRP allows to construct private transactions, the size of the proof would make the size of transactions too big. Therefore in order to have practical solutions it is important to research efficient implementations of ZKRPs, and this is the main purpose of this repository. 
+* Since ZKRP is a subcase of ZKSM, we have that ZKSM may be used in replacement of ZKRP, and this is interesting because for certain scenarios we have that it leads to better performance. 
 
-The repository also contains the implementation of the paper "Efficient protocols for set membership and range proofs", by Jan Camenisch, Rafik Chaabouni and abhi shelat. Zero Knowledge Set Membership (ZKSM) allows to prove that some secret value is an element of a determined set, without disclosing which value.    
+## ZKSM use cases:
+
+ZKSM allows to prove that some secret value is an element of a determined set, without disclosing which value. Namely, we can do the following:
+
+* Prove that we live in a country that belongs to the European Union. 
+* Validation of KYC private data. For example, proving that a postcode is valid, without revealing it. 
+* Private Identity Management Systems.
+* Other interesting applications like: Anti-Money Laundering (AML) and Common Reference Standard (CRS).
 
 ## Range Proof in Ethereum 
 
