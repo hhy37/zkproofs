@@ -1,4 +1,4 @@
-## Zero Knowledge Range Proof
+## Zero Knowledge Range Proof and Set Membership
 
 This repository contains ING's Zero Knowledge Range Proof (ZKRP) contract for Ethereum. The current implementation is based on the paper "Efficient Proofs that a Committed Number Lies in an Interval" by Fabrice Boudot.  
 
@@ -8,8 +8,9 @@ Among the main benefits of using ZKRP it is possible remark the following:
 * ZKRP is being used to provide private transactions on Monero, zkLedger, Confidential Transactions and many others.    
 * Although ZKRP allows to construct private transactions, the size of the proof would make the size of transactions too big. Therefore in order to have practical solutions it is important to research efficient implementations of ZKRPs, and this is the main purpose of this repository.  
 
+The repository also contains the implementation of the paper "Efficient protocols for set membership and range proofs", by Jan Camenisch, Rafik Chaabouni and abhi shelat. Zero Knowledge Set Membership (ZKSM) allows to prove that some secret value is an element of a determined set, without disclosing which value.    
 
-## Introduction 
+## Range Proof in Ethereum 
 
 One fundamental concern in blockchain technology is the confidentiality of the data on the blockchain. In order to reach consensus between all independent nodes in a blockchain network, each node must be able to validate all transactions (for instance against double-spend), in most cases this means that the content of the transactions is visible to all nodes. Fortunately several solutions exist that preserve confidentiality on a blockchain (private transactions, HyperLedger Fabric Channels, Payment Channels, Homomorphic encryption, transaction-mixing, zero knowledge proofs etc.). This article describes the implementation of a Zero Knowledge Range Proof in Ethereum.
 
