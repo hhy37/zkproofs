@@ -1,10 +1,12 @@
 # Zero Knowledge Proofs
 
-This repository contains ING's **Zero Knowledge Range Proof (ZKRP)** and **Zero Knowledge Set Membership (ZKSM)** protocols. The current implementation for range proofs is based on the paper [Efficient Proofs that a Committed Number Lies in an Interval](https://www.iacr.org/archive/eurocrypt2000/1807/18070437-new.pdf) by **Fabrice Boudot**. Set Membership implementation is based on [Efficient protocols for set membership and range proofs](https://infoscience.epfl.ch/record/128718/files/CCS08.pdf), by **Jan Camenisch, Rafik Chaabouni and Abhi Shelat**. 
+This repository contains ING's **Zero Knowledge Range Proof (ZKRP)** and **Zero Knowledge Set Membership (ZKSM)**. The current implementations are based on the following papers:
+* Range Proofs based on the paper: [Efficient Proofs that a Committed Number Lies in an Interval](https://www.iacr.org/archive/eurocrypt2000/1807/18070437-new.pdf) by **Fabrice Boudot**. 
+* Set Membership Proofs based on the paper: [Efficient protocols for set membership and range proofs](https://infoscience.epfl.ch/record/128718/files/CCS08.pdf), by **Jan Camenisch, Rafik Chaabouni and Abhi Shelat**. 
 
 ## Getting Started
 
-### Highlights :muscle:
+### Highlights :rocket:
 
 * Significantly more efficient than generic Zero Knowledge Proofs, like is the case of zkSNARKS. 
 * Currently used to provide private transactions on Monero, zkLedger, Confidential Transactions and many others.
