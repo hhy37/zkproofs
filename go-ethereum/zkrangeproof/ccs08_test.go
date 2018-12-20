@@ -129,7 +129,7 @@ func TestZKSet(t *testing.T) {
 	s[0] = 12
 	s[1] = 42
 	s[2] = 61
-	s[2] = 71
+	s[3] = 71
 	startTime := time.Now()
 	p, _ := SetupSet(s)
 	setupTime := time.Now()
