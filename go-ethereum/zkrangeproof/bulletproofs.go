@@ -33,6 +33,7 @@ import (
 	"errors"
 	"encoding/json"
 	"io/ioutil"
+	"fmt"
 )
 
 var (
@@ -68,6 +69,102 @@ type proofBP struct {
 	Tprime *big.Int
 	Proofip proofBip
 	Commit *p256
+}
+
+type (
+	pstring struct {
+		X string
+		Y string
+	}
+)
+
+func (p *proofBP) MarshalJSON() ([]byte, error) {
+	type Alias proofBP
+	return json.Marshal(&struct {
+		V pstring `json:"V"`
+		A pstring `json:"A"`
+		S pstring `json:"S"`
+		T1 pstring `json:"T1"`
+		T2 pstring `json:"T2"`
+		Taux string `json:"Taux"`
+		Mu string `json:"Mu"`
+		Tprime string `json:"Tprime"`
+		Commit pstring `json:"Commit"`
+		*Alias
+	}{
+		V: pstring{X: p.V.X.String(), Y: p.V.Y.String()},
+		A: pstring{X: p.A.X.String(), Y: p.A.Y.String()},
+		S: pstring{X: p.S.X.String(), Y: p.S.Y.String()},
+		T1: pstring{X: p.T1.X.String(), Y: p.T1.Y.String()},
+		T2: pstring{X: p.T2.X.String(), Y: p.T2.Y.String()},
+		Mu: p.Mu.String(),
+		Taux: p.Taux.String(),
+		Tprime: p.Tprime.String(),
+		Commit: pstring{X: p.Commit.X.String(), Y: p.Commit.Y.String()},
+		Alias:    (*Alias)(p),
+	})
+}
+
+
+func (p *proofBP) UnmarshalJSON(data []byte) error {
+	type Alias proofBP
+	aux := &struct {
+		V pstring `json:"V"`
+		A pstring `json:"A"`
+		S pstring `json:"S"`
+		T1 pstring `json:"T1"`
+		T2 pstring `json:"T2"`
+		Taux string `json:"Taux"`
+		Mu string `json:"Mu"`
+		Tprime string `json:"Tprime"`
+		Commit pstring `json:"Commit"`
+		*Alias
+	}{
+		Alias: (*Alias)(p),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}	
+	valVX, _ := new(big.Int).SetString(aux.V.X, 10)
+	valVY, _ := new(big.Int).SetString(aux.V.Y, 10)
+	valAX, _ := new(big.Int).SetString(aux.A.X, 10)
+	valAY, _ := new(big.Int).SetString(aux.A.Y, 10)
+	valSX, _ := new(big.Int).SetString(aux.S.X, 10)
+	valSY, _ := new(big.Int).SetString(aux.S.Y, 10)
+	valT1X, _ := new(big.Int).SetString(aux.T1.X, 10)
+	valT1Y, _ := new(big.Int).SetString(aux.T1.Y, 10)
+	valT2X, _ := new(big.Int).SetString(aux.T2.X, 10)
+	valT2Y, _ := new(big.Int).SetString(aux.T2.Y, 10)
+	valCommitX, _ := new(big.Int).SetString(aux.Commit.X, 10)
+	valCommitY, _ := new(big.Int).SetString(aux.Commit.Y, 10)
+	p.V = &p256{
+		X: valVX,
+		Y: valVY,
+	}
+	p.A = &p256{
+		X: valAX,
+		Y: valAY,
+	}
+	p.S = &p256{
+		X: valSX,
+		Y: valSY,
+	}
+	p.T1 = &p256{
+		X: valT1X,
+		Y: valT1Y,
+	}
+	p.T2 = &p256{
+		X: valT2X,
+		Y: valT2Y,
+	}
+	p.Commit = &p256{
+		X: valCommitX,
+		Y: valCommitY,
+	}
+	p.Taux, _ = new(big.Int).SetString(aux.Taux, 10)
+	p.Mu, _ = new(big.Int).SetString(aux.Mu, 10)
+	p.Tprime, _ = new(big.Int).SetString(aux.Tprime, 10)
+	return nil
 }
  
 /*
@@ -710,6 +807,8 @@ func (zkrp *bp) Verify (proof proofBP) (bool, error) {
 	
 	// Compute left hand side
 	lhs, _ := CommitG1(proof.Tprime, proof.Taux, zkrp.H)
+	fmt.Println("############## lhs ###############")
+	fmt.Println(hprime[31]);
 	
 	// Compute right hand side
 	z2 := Multiply(z, z)
