@@ -36,8 +36,6 @@ func TestVectorCopy(t *testing.T) {
 	ok := (result[0].Cmp(new(big.Int).SetInt64(1)) == 0)
 	ok = ok && (result[1].Cmp(GetBigInt("1")) == 0)
 	ok = ok && (result[2].Cmp(GetBigInt("1")) == 0)
-	fmt.Println("Vector copy result:")
-	fmt.Println(ok)
 	if ok != true {
 		t.Errorf("Assert failure: expected true, actual: %t", ok)
 	}
@@ -59,8 +57,6 @@ func TestVectorConvertToBig(t *testing.T) {
 	ok := (result[0].Cmp(new(big.Int).SetInt64(3)) == 0)
 	ok = ok && (result[1].Cmp(GetBigInt("4")) == 0)
 	ok = ok && (result[2].Cmp(GetBigInt("5")) == 0)
-	fmt.Println("Convert to big result:")
-	fmt.Println(ok)
 	if ok != true {
 		t.Errorf("Assert failure: expected true, actual: %t", ok)
 	}
@@ -83,8 +79,6 @@ func TestScalarProduct(t *testing.T) {
 	b[2] = new(big.Int).SetInt64(3)
 	result, _ := ScalarProduct(a, b)
 	ok := (result.Cmp(new(big.Int).SetInt64(63)) == 0)
-	fmt.Println("Scalar Product:")
-	fmt.Println(ok)
 	if ok != true {
 		t.Errorf("Assert failure: expected true, actual: %t", ok)
 	}
@@ -109,8 +103,6 @@ func TestVectorAdd(t *testing.T) {
 	ok := (result[0].Cmp(new(big.Int).SetInt64(10)) == 0)
 	ok = ok && (result[1].Cmp(GetBigInt("38")) == 0)
 	ok = ok && (result[2].Cmp(GetBigInt("49")) == 0)
-	fmt.Println("Addition result:")
-	fmt.Println(ok)
 	if ok != true {
 		t.Errorf("Assert failure: expected true, actual: %t", ok)
 	}
@@ -135,8 +127,6 @@ func TestVectorSub(t *testing.T) {
 	ok := (result[0].Cmp(new(big.Int).SetInt64(4)) == 0)
 	ok = ok && (result[1].Cmp(GetBigInt("115792089237316195423570985008687907852837564279074904382605163141518161494315")) == 0)
 	ok = ok && (result[2].Cmp(GetBigInt("115792089237316195423570985008687907852837564279074904382605163141518161494306")) == 0)
-	fmt.Println("Subtraction result:")
-	fmt.Println(ok)
 	if ok != true {
 		t.Errorf("Assert failure: expected true, actual: %t", ok)
 	}
@@ -162,8 +152,6 @@ func TestVectorMul(t *testing.T) {
 	ok = ok && (result[1].Cmp(new(big.Int).SetInt64(240)) == 0)
 	ok = ok && (result[2].Cmp(new(big.Int).SetInt64(360)) == 0)
 
-	fmt.Println("Multiplication result:")
-	fmt.Println(ok)
 	if ok != true {
 		t.Errorf("Assert failure: expected true, actual: %t", ok)
 	}
@@ -178,8 +166,6 @@ func TestPowerOf(t *testing.T) {
 	ok := (result[0].Cmp(new(big.Int).SetInt64(1)) == 0)
 	ok = ok && (result[1].Cmp(new(big.Int).SetInt64(3)) == 0)
 	ok = ok && (result[2].Cmp(new(big.Int).SetInt64(9)) == 0)
-	fmt.Println("PowerOf result:")
-	fmt.Println(ok)
 	if ok != true {
 		t.Errorf("Assert failure: expected true, actual: %t", ok)
 	}
@@ -199,9 +185,6 @@ func TestInnerProduct(t *testing.T) {
 	// Review if it is the best way, since we maybe could use the 
 	// inner product independently of the range proof. 
 	zkrp.Setup(0,16) 
-	//zkrp.Setup(0,4) 
-	//zkrp.Setup(0,2) 
-	fmt.Println(zkrp.N)
 	a = make([]*big.Int, zkrp.N)
 	a[0] = new(big.Int).SetInt64(2)
 	a[1] = new(big.Int).SetInt64(-1)
@@ -217,41 +200,6 @@ func TestInnerProduct(t *testing.T) {
 	zkip.Setup(zkrp.H, zkrp.Gg, zkrp.Hh, c)
 	proof, _ := zkip.Prove(a, b, commit)	
 	ok, _ := zkip.Verify(proof)
-	fmt.Println("Inner Product result:")
-	fmt.Println(ok)
-	if ok != true {
-		t.Errorf("Assert failure: expected true, actual: %t", ok)
-	}
-}
-
-/*
-Test the TRUE case of ZK Range Proof scheme using Bulletproofs. 
-*/
-func TestTrueBulletproofsZKRP(t *testing.T) {
-	var (
-		zkrp bp
-	)
-	startTime := time.Now()
-	//zkrp.Setup(0,4294967296) // ITS BEING USED TO COMPUTE N 
-	zkrp.Setup(0,65536) // ITS BEING USED TO COMPUTE N 
-	setupTime := time.Now()
-	fmt.Println("Setup time:")
-	fmt.Println(setupTime.Sub(startTime))
-	
-	//x := new(big.Int).SetInt64(4294967295)
-	x := new(big.Int).SetInt64(65535)
-	proof, _ := zkrp.Prove(x)
-	proofTime := time.Now()
-	fmt.Println("Proof time:")
-	fmt.Println(proofTime.Sub(setupTime))
-
-	ok, _ := zkrp.Verify(proof)
-	verifyTime := time.Now()
-	fmt.Println("Verify time:")
-	fmt.Println(verifyTime.Sub(proofTime))
-	
-	fmt.Println("Range Proofs result:")
-	fmt.Println(ok)
 	if ok != true {
 		t.Errorf("Assert failure: expected true, actual: %t", ok)
 	}
@@ -288,6 +236,38 @@ func TestFalseBulletproofsZKRP(t *testing.T) {
 	}
 }
 
+/*
+Test the TRUE case of ZK Range Proof scheme using Bulletproofs. 
+*/
+func TestTrueBulletproofsZKRP(t *testing.T) {
+	var (
+		zkrp bp
+	)
+	startTime := time.Now()
+	zkrp.Setup(0,4294967296) // ITS BEING USED TO COMPUTE N 
+	setupTime := time.Now()
+	fmt.Println("Setup time:")
+	fmt.Println(setupTime.Sub(startTime))
+	
+	x := new(big.Int).SetInt64(65535)
+	proof, _ := zkrp.Prove(x)
+	proofTime := time.Now()
+	fmt.Println("Proof time:")
+	fmt.Println(proofTime.Sub(setupTime))
+
+	ok, _ := zkrp.Verify(proof)
+	verifyTime := time.Now()
+	fmt.Println("Verify time:")
+	fmt.Println(verifyTime.Sub(proofTime))
+	
+	fmt.Println("Range Proofs result:")
+	fmt.Println(ok)
+	if ok != true {
+		t.Errorf("Assert failure: expected true, actual: %t", ok)
+	}
+}
+
+
 func BenchmarkBulletproofs(b *testing.B) {
 	var (
 		zkrp bp
@@ -321,18 +301,55 @@ func BenchmarkScalarMult(b *testing.B) {
 }
 
 func TestHashBP(t *testing.T) {
-	fmt.Println("######################################################################################")
-	agx, _ := new(big.Int).SetString("110720467414728166769654679803728202169916280248550137472490865118702779748947", 16)
-	agy, _ := new(big.Int).SetString("103949684536896233354287911519259186718323435572971865592336813380571928560949", 16)
-	sgx, _ := new(big.Int).SetString("78662919066140655151560869958157053125629409725243565127658074141532489435921", 16)
-	sgy, _ := new(big.Int).SetString("114946280626097680211499478702679495377587739951564115086530426937068100343655", 16)
-	fmt.Println(agx)
-	fmt.Println(sgx)
+	agx, _ := new(big.Int).SetString("110720467414728166769654679803728202169916280248550137472490865118702779748947", 10)
+	agy, _ := new(big.Int).SetString("103949684536896233354287911519259186718323435572971865592336813380571928560949", 10)
+	sgx, _ := new(big.Int).SetString("78662919066140655151560869958157053125629409725243565127658074141532489435921", 10)
+	sgy, _ := new(big.Int).SetString("114946280626097680211499478702679495377587739951564115086530426937068100343655", 10)
 	pointa := &p256{X:agx, Y:agy}
 	points := &p256{X:sgx, Y:sgy}
-	fmt.Println(pointa)
-	fmt.Println(points)
 	result1, result2, _ := HashBP(pointa, points)
-	fmt.Println(result1)
-	fmt.Println(result2)
+	res1, _ := new(big.Int).SetString("103823382860325249552741530200099120077084118788867728791742258217664299339569", 10)
+	res2, _ := new(big.Int).SetString("8192372577089859289404358830067912230280991346287696886048261417244724213964", 10)
+	ok1 := (result1.Cmp(res1) != 0)
+	ok2 := (result2.Cmp(res2) != 0)
+	ok := ok1 && ok2
+	if ok {
+		t.Errorf("Assert failure: expected true, actual: %t", ok)
+	}
+}
+
+func TestHashBPGx(t *testing.T) {
+	gx, _ := new(big.Int).SetString("79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798", 16);
+        gy, _ := new(big.Int).SetString("483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 16);
+	point := &p256{X:gx, Y:gy}
+	result1, result2, _ := HashBP(point, point)
+	res1, _ := new(big.Int).SetString("11897424191990306464486192136408618361228444529783223689021929580052970909263", 10)
+	res2, _ := new(big.Int).SetString("22166487799255634251145870394406518059682307840904574298117500050508046799269", 10)
+	ok1 := (result1.Cmp(res1) != 0)
+	ok2 := (result2.Cmp(res2) != 0)
+	ok := ok1 && ok2
+	if ok {
+		t.Errorf("Assert failure: expected true, actual: %t", ok)
+	}
+}
+
+func TestInv(t *testing.T) {
+	y, _ := new(big.Int).SetString("103823382860325249552741530200099120077084118788867728791742258217664299339569", 10)
+	yinv := ModInverse(y, ORDER)
+	res, _ := new(big.Int).SetString("38397371868935917445400134055424677162505875368971619911110421656148020877351", 10)
+	ok := (yinv.Cmp(res) != 0)
+	if ok {
+		t.Errorf("Assert failure: expected true, actual: %t", ok)
+	}
+}
+
+func TestHPrime(t *testing.T) {
+	var zkrp *bp
+	var proof *proofBP
+	zkrp, _ = LoadParamFromDisk("setup.dat")
+	proof, _ = LoadProofFromDisk("proof.dat")
+	ok, _ := zkrp.Verify(*proof)
+	if !ok {
+		t.Errorf("Assert failure: expected true, actual: %t", ok)
+	}
 }

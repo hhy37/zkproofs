@@ -33,7 +33,6 @@ import (
 	"errors"
 	"encoding/json"
 	"io/ioutil"
-	"fmt"
 )
 
 var (
@@ -343,34 +342,6 @@ Hash is responsible for the computing a Zp element given elements from GT and G1
 */
 func HashBP(A, S *p256) (*big.Int, *big.Int, error) {
 
-	/*var b bytes.Buffer
-	zero := new(big.Int).SetInt64(10).String()
-	fmt.Println(zero)
-	b.WriteString(zero)
-	digest := sha256.New()
-	digest.Write([]byte(b.String()))
-	output := digest.Sum(nil)
-	tmp := output[0: len(output)]
-	result, _ := byteconversion.FromByteArray(tmp)
-	fmt.Println("result:")
-	fmt.Println(result.String())
-
-	digest1 := sha256.New()
-	var buffer bytes.Buffer
-	buffer.WriteString(A.X.String())
-	buffer.WriteString(A.Y.String())
-	buffer.WriteString(S.X.String())
-	buffer.WriteString(S.Y.String())
-	
-	fmt.Println("buffer:")
-	fmt.Println(buffer.String())*/
-
-	//src := []byte(buffer.String())
-	//dst := make([]byte, hex.EncodedLen(len(src)))
-	//hex.Encode(dst, src)
-	//fmt.Printf("%s\n", src)
-	//fmt.Printf("%s\n", dst)
-	
 	digest1 := sha256.New()
 	var buffer bytes.Buffer
 	buffer.WriteString(A.X.String())
@@ -378,24 +349,22 @@ func HashBP(A, S *p256) (*big.Int, *big.Int, error) {
 	buffer.WriteString(S.X.String())
 	buffer.WriteString(S.Y.String())
 	digest1.Write([]byte(buffer.String()))
-	//digest1.Write([]byte(S.String()))
 	output1 := digest1.Sum(nil)
 	tmp1 := output1[0: len(output1)]
-	result1, err1 := byteconversion.FromByteArray(tmp1)
+	result1 := new(big.Int).SetBytes(tmp1)
 	
 	digest2 := sha256.New()
-	digest2.Write([]byte(S.String()))
-	digest2.Write([]byte(A.String()))
-	digest2.Write([]byte(result1.String()))
+	var buffer2 bytes.Buffer
+	buffer2.WriteString(A.X.String())
+	buffer2.WriteString(A.Y.String())
+	buffer2.WriteString(S.X.String())
+	buffer2.WriteString(S.Y.String())
+	buffer2.WriteString(result1.String())
+	digest2.Write([]byte(buffer2.String()))
 	output2 := digest2.Sum(nil)
 	tmp2 := output2[0: len(output2)]
-	result2, err2 := byteconversion.FromByteArray(tmp2)
+	result2 := new(big.Int).SetBytes(tmp2)
 	
-	if err1 != nil {
-		return nil, nil, err1
-	} else if err2 != nil {
-		return nil, nil, err2
-	}
 	return result1, result2, nil
 }
 
@@ -470,7 +439,6 @@ func LoadParamFromDisk(s string) (*bp, error) {
 	}
 	if len(c) > 0 {
 		json.Unmarshal(c, &result)
-		fmt.Println(result)
 		return &result, nil
 	}
 	return nil, errors.New("Could not load generators.")
@@ -479,15 +447,14 @@ func LoadParamFromDisk(s string) (*bp, error) {
 /*
 LoadProofFromDisk reads the generator from a file. 
 */
-func LoadProofFromDisk(s string) (*bp, error) {
-	var result bp
+func LoadProofFromDisk(s string) (*proofBP, error) {
+	var result proofBP
 	c, err := ioutil.ReadFile(s)
 	if err != nil {
 		return nil, err
 	}
 	if len(c) > 0 {
 		json.Unmarshal(c, &result)
-		fmt.Println(result)
 		return &result, nil
 	}
 	return nil, errors.New("Could not load proof.")
@@ -528,7 +495,6 @@ SetupPre is responsible for computing the common parameters.
 */
 func (zkrp *bp) SetupPre(a,b int64) {
 	res, _ := LoadParamFromDisk("setup.dat")
-	fmt.Println(res)
 	zkrp = res
 	// Setup Inner Product
 	zkrp.Zkip.Setup(zkrp.H, zkrp.Gg, zkrp.Hh, new(big.Int).SetInt64(0))
@@ -694,8 +660,8 @@ func (zkrp *bp) Prove(secret *big.Int) (proofBP, error) {
 	}
 
 	// Update Inner Product Proof Setup
-	zkrp.Zkip.h = hprime
-	zkrp.Zkip.c = tprime
+	zkrp.Zkip.Hh = hprime
+	zkrp.Zkip.Cc = tprime
 
 	commit, _ := CommitInnerProduct(zkrp.Gg, hprime, bl, br)
 	proofip, _ := zkrp.Zkip.Prove(bl, br, commit)	
@@ -828,12 +794,12 @@ func (zkrp *bp) Verify (proof proofBP) (bool, error) {
 Base struct for the Inner Product Argument.
 */
 type bip struct {
-	n int64
-	c *big.Int
-	u *p256
+	N int64
+	Cc *big.Int
+	Uu *p256
 	H *p256
-	g []*p256  
-	h []*p256  
+	Gg []*p256  
+	Hh []*p256  
 	P *p256
 }
 
@@ -849,7 +815,7 @@ type proofBip struct {
 	h *p256
 	A *big.Int
 	B *big.Int
-	n int64
+	N int64
 }
 
 /*
@@ -901,13 +867,13 @@ func (zkip *bip) Setup(H *p256, g,h []*p256, c *big.Int) (bip, error) {
 		params bip
 	)
 	
-	zkip.g = make([]*p256, zkip.n)
-	zkip.h = make([]*p256, zkip.n)
-	zkip.u, _ = MapToGroup(SEEDU)
+	zkip.Gg = make([]*p256, zkip.N)
+	zkip.Hh = make([]*p256, zkip.N)
+	zkip.Uu, _ = MapToGroup(SEEDU)
 	zkip.H = H
-	zkip.g = g
-	zkip.h = h
-	zkip.c = c
+	zkip.Gg = g
+	zkip.Hh = h
+	zkip.Cc = c
 
 	return params, nil
 }
@@ -931,14 +897,14 @@ func (zkip *bip) Prove(a,b []*big.Int, P *p256) (proofBip, error) {
 	} else {
 		// Fiat-Shamir:
 		// x = Hash(g,h,P,c)
-		x, _ := HashIP(zkip.g, zkip.h, P, zkip.c, zkip.n)
+		x, _ := HashIP(zkip.Gg, zkip.Hh, P, zkip.Cc, zkip.N)
 		// Pprime = P.u^(x.c)		
-		ux := new(p256).ScalarMult(zkip.u, x)  
-		uxc := new(p256).ScalarMult(ux, zkip.c)  
+		ux := new(p256).ScalarMult(zkip.Uu, x)  
+		uxc := new(p256).ScalarMult(ux, zkip.Cc)  
 		PP := new(p256).Multiply(P, uxc)
 		// Execute Protocol 2 recursively
 		zkip.P = PP
-		proof, err := BIP(a, b, zkip.g, zkip.h, ux, zkip.P, n, Ls, Rs)
+		proof, err := BIP(a, b, zkip.Gg, zkip.Hh, ux, zkip.P, n, Ls, Rs)
 		return proof, err
 	}
 		
@@ -1024,7 +990,7 @@ func BIP(a,b []*big.Int, g,h []*p256, u,P *p256, n int64, Ls,Rs []*p256) (proofB
 		// recursion BIP(g',h',u,P'; a', b')
 		proof, _ = BIP(aprime, bprime, gprime, hprime, u, Pprime, nprime, Ls, Rs)
 	}
-	proof.n = n
+	proof.N = n
 	return proof, nil
 }
 
@@ -1041,10 +1007,10 @@ func (zkip *bip) Verify(proof proofBip) (bool, error) {
 	)
 
 	i = 0
-	gprime := zkip.g
-	hprime := zkip.h
+	gprime := zkip.Gg
+	hprime := zkip.Hh
 	Pprime := zkip.P
-	nprime := proof.n 
+	nprime := proof.N 
 	for i < int64(logn) {
 		nprime = nprime / 2
 		x, _, _ = HashBP(proof.Ls[i], proof.Rs[i])
