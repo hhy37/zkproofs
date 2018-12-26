@@ -33,7 +33,6 @@ import (
 	"errors"
 	"encoding/json"
 	"io/ioutil"
-	"fmt"
 )
 
 var (
@@ -78,8 +77,34 @@ type (
 	}
 )
 
+type (
+	ipstring struct {
+		N int64
+		A string
+		B string
+		U pstring
+		P pstring
+		Gg pstring
+		Hh pstring
+		Ls []pstring
+		Rs []pstring
+	}
+)
+
 func (p *proofBP) MarshalJSON() ([]byte, error) {
 	type Alias proofBP
+	var iLs []pstring
+	var iRs []pstring
+	var i int
+	logn := len(p.Proofip.Ls)
+	iLs = make([]pstring, logn)
+	iRs = make([]pstring, logn)
+	i = 0
+	for i < logn {
+		iLs[i] = pstring{X: p.Proofip.Ls[i].X.String(), Y: p.Proofip.Ls[i].Y.String()} 
+		iRs[i] = pstring{X: p.Proofip.Rs[i].X.String(), Y: p.Proofip.Rs[i].Y.String()} 
+		i = i + 1;
+	}
 	return json.Marshal(&struct {
 		V pstring `json:"V"`
 		A pstring `json:"A"`
@@ -90,6 +115,7 @@ func (p *proofBP) MarshalJSON() ([]byte, error) {
 		Mu string `json:"Mu"`
 		Tprime string `json:"Tprime"`
 		Commit pstring `json:"Commit"`
+		Proofip ipstring `json:"Proofip"`
 		*Alias
 	}{
 		V: pstring{X: p.V.X.String(), Y: p.V.Y.String()},
@@ -101,6 +127,17 @@ func (p *proofBP) MarshalJSON() ([]byte, error) {
 		Taux: p.Taux.String(),
 		Tprime: p.Tprime.String(),
 		Commit: pstring{X: p.Commit.X.String(), Y: p.Commit.Y.String()},
+		Proofip: ipstring{
+			N: p.Proofip.N,
+			A: p.Proofip.A.String(),
+			B: p.Proofip.B.String(),
+			U: pstring{X: p.Proofip.U.X.String(), Y: p.Proofip.U.Y.String()},
+			P: pstring{X: p.Proofip.P.X.String(), Y: p.Proofip.P.Y.String()},
+			Gg: pstring{X: p.Proofip.Gg.X.String(), Y: p.Proofip.Gg.Y.String()},
+			Hh: pstring{X: p.Proofip.Hh.X.String(), Y: p.Proofip.Hh.Y.String()},
+			Ls: iLs,
+			Rs: iRs,
+		},
 		Alias:    (*Alias)(p),
 	})
 }
@@ -118,6 +155,7 @@ func (p *proofBP) UnmarshalJSON(data []byte) error {
 		Mu string `json:"Mu"`
 		Tprime string `json:"Tprime"`
 		Commit pstring `json:"Commit"`
+		Proofip ipstring `json:"Proofip"`
 		*Alias
 	}{
 		Alias: (*Alias)(p),
@@ -137,6 +175,17 @@ func (p *proofBP) UnmarshalJSON(data []byte) error {
 	valT2Y, _ := new(big.Int).SetString(aux.T2.Y, 10)
 	valCommitX, _ := new(big.Int).SetString(aux.Commit.X, 10)
 	valCommitY, _ := new(big.Int).SetString(aux.Commit.Y, 10)
+	valN := aux.Proofip.N
+	valA, _ := new(big.Int).SetString(aux.Proofip.A, 10)
+	valB, _ := new(big.Int).SetString(aux.Proofip.B, 10)
+	valUx, _ := new(big.Int).SetString(aux.Proofip.U.X, 10)
+	valUy, _ := new(big.Int).SetString(aux.Proofip.U.Y, 10)
+	valPx, _ := new(big.Int).SetString(aux.Proofip.P.X, 10)
+	valPy, _ := new(big.Int).SetString(aux.Proofip.P.Y, 10)
+	valGgx, _ := new(big.Int).SetString(aux.Proofip.Gg.X, 10)
+	valGgy, _ := new(big.Int).SetString(aux.Proofip.Gg.Y, 10)
+	valHhx, _ := new(big.Int).SetString(aux.Proofip.Hh.X, 10)
+	valHhy, _ := new(big.Int).SetString(aux.Proofip.Hh.Y, 10)
 	p.V = &p256{
 		X: valVX,
 		Y: valVY,
@@ -161,9 +210,164 @@ func (p *proofBP) UnmarshalJSON(data []byte) error {
 		X: valCommitX,
 		Y: valCommitY,
 	}
+	valU := &p256{
+		X: valUx,
+		Y: valUy,
+	}
+	valP := &p256{
+		X: valPx,
+		Y: valPy,
+	}
+	valGg := &p256{
+		X: valGgx,
+		Y: valGgy,
+	}
+	valHh := &p256{
+		X: valHhx,
+		Y: valHhy,
+	}
 	p.Taux, _ = new(big.Int).SetString(aux.Taux, 10)
 	p.Mu, _ = new(big.Int).SetString(aux.Mu, 10)
 	p.Tprime, _ = new(big.Int).SetString(aux.Tprime, 10)
+	logn := len(aux.Proofip.Ls)
+	valLs := make([]*p256, logn)
+	valRs := make([]*p256, logn)
+	var (
+		i int
+		valLsx *big.Int
+		valLsy *big.Int
+		valRsx *big.Int
+		valRsy *big.Int
+	)
+	i = 0
+	for (i < logn) {
+		valLsx, _ = new(big.Int).SetString(aux.Proofip.Ls[i].X, 10)
+		valLsy, _ = new(big.Int).SetString(aux.Proofip.Ls[i].Y, 10)
+		valLs[i] = &p256{X: valLsx, Y: valLsy}
+		valRsx, _ = new(big.Int).SetString(aux.Proofip.Rs[i].X, 10)
+		valRsy, _ = new(big.Int).SetString(aux.Proofip.Rs[i].Y, 10)
+		valRs[i] = &p256{X: valRsx, Y: valRsy}
+		i = i + 1
+	}
+	p.Proofip = proofBip{
+		N: valN,
+		A: valA,
+		B: valB,
+		U: valU,
+		P: valP,
+		Gg: valGg,
+		Hh: valHh,
+		Ls: valLs,
+		Rs: valRs,
+	}
+	return nil
+}
+
+type (
+	ipgenstring struct {
+		N int64
+		Cc string
+		Uu pstring
+		H pstring
+		Gg []pstring
+		Hh []pstring
+		P pstring
+	}
+)
+
+
+func (s *bp) MarshalJSON() ([]byte, error) {
+	type Alias bp
+	var iHh []pstring
+	var iGg []pstring
+
+	var i int
+	n := len(s.Gg)
+	iGg = make([]pstring, n)
+	iHh = make([]pstring, n)
+	i = 0
+	for i < n {
+		iGg[i] = pstring{X: s.Zkip.Gg[i].X.String(), Y: s.Zkip.Gg[i].Y.String()} 
+		iHh[i] = pstring{X: s.Zkip.Hh[i].X.String(), Y: s.Zkip.Hh[i].Y.String()} 
+		i = i + 1;
+	}
+	return json.Marshal(&struct {
+		Zkip ipgenstring `json:"Zkip"`
+		*Alias
+	}{
+		Zkip: ipgenstring{
+			N: s.N,
+			Cc: s.Zkip.Cc.String(),
+			Uu: pstring{X: s.Zkip.Uu.X.String(), Y: s.Zkip.Uu.Y.String()},
+			H: pstring{X: s.Zkip.H.X.String(), Y: s.Zkip.H.Y.String()},
+			Gg: iGg,
+			Hh: iHh,
+			P: pstring{X: s.Zkip.P.X.String(), Y: s.Zkip.P.Y.String()},
+		},
+		Alias:    (*Alias)(s),
+	})
+}
+
+func (s *bp) UnmarshalJSON(data []byte) error {
+	type Alias bp
+	aux := &struct {
+		Zkip ipgenstring `json:"Zkip"`
+		*Alias
+	}{
+		Alias: (*Alias)(s),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}	
+	n := aux.N
+	valGg := make([]*p256, n)
+	valHh := make([]*p256, n)
+	var (
+		i int64
+		valGgx *big.Int
+		valGgy *big.Int
+		valHhx *big.Int
+		valHhy *big.Int
+	)
+	i = 0
+	for (i < n) {
+		valGgx, _ = new(big.Int).SetString(aux.Zkip.Gg[i].X, 10)
+		valGgy, _ = new(big.Int).SetString(aux.Zkip.Gg[i].Y, 10)
+		valGg[i] = &p256{X: valGgx, Y: valGgy}
+		valHhx, _ = new(big.Int).SetString(aux.Zkip.Hh[i].X, 10)
+		valHhy, _ = new(big.Int).SetString(aux.Zkip.Hh[i].Y, 10)
+		valHh[i] = &p256{X: valHhx, Y: valHhy}
+		i = i + 1
+	}
+	valN := aux.N
+	valCc, _ := new(big.Int).SetString(aux.Zkip.Cc, 10)
+	valUux, _ := new(big.Int).SetString(aux.Zkip.Uu.X, 10)
+	valUuy, _ := new(big.Int).SetString(aux.Zkip.Uu.Y, 10)
+	valHx, _ := new(big.Int).SetString(aux.Zkip.H.X, 10)
+	valHy, _ := new(big.Int).SetString(aux.Zkip.H.Y, 10)
+	valPx, _ := new(big.Int).SetString(aux.Zkip.P.X, 10)
+	valPy, _ := new(big.Int).SetString(aux.Zkip.P.Y, 10)
+	valUu := &p256{
+		X: valUux,
+		Y: valUuy,
+	}
+	valH := &p256{
+		X: valHx,
+		Y: valHy,
+	}
+	valP := &p256{
+		X: valPx,
+		Y: valPy,
+	}
+	s.Zkip = bip{
+		N: valN,
+		Cc: valCc,
+		Uu: valUu,
+		H: valH,
+		Gg: valGg,
+		Hh: valHh,
+		P: valP,
+	}
 	return nil
 }
  
@@ -580,7 +784,9 @@ func (zkrp *bp) Delta(y, z *big.Int) (*big.Int, error) {
 	sp12, _ := ScalarProduct(v1, p2n)
 
 	result = Sub(z, z2)
+	result = Mod(result, ORDER)
 	result = Multiply(result, sp1y)
+	result = Mod(result, ORDER)
 	result = Sub(result, Multiply(z3, sp12))
 	result = Mod(result, ORDER)
 
@@ -616,10 +822,11 @@ func (zkrp *bp) Setup(a,b int64) {
 		zkrp.Hh[i], _ = MapToGroup(SEEDH+"h"+string(i)); 
 		i = i + 1
 	}
-	zkrp.SaveToDisk("setup.dat", nil)
+	//zkrp.SaveToDisk("setup.dat", nil)
 
 	// Setup Inner Product
 	zkrp.Zkip.Setup(zkrp.H, zkrp.Gg, zkrp.Hh, new(big.Int).SetInt64(0))
+	zkrp.SaveToDisk("setup.dat", nil)
 }
 
 /* 
@@ -807,8 +1014,6 @@ func (zkrp *bp) Verify (proof proofBP) (bool, error) {
 	
 	// Compute left hand side
 	lhs, _ := CommitG1(proof.Tprime, proof.Taux, zkrp.H)
-	fmt.Println("############## lhs ###############")
-	fmt.Println(hprime[31]);
 	
 	// Compute right hand side
 	z2 := Multiply(z, z)
@@ -846,6 +1051,8 @@ func (zkrp *bp) Verify (proof proofBP) (bool, error) {
 	mz := Sub(ORDER, z)
 	vmz, _ := VectorCopy(mz, zkrp.N)
 	gpmz, _ := VectorExp(zkrp.Gg, vmz)
+	//fmt.Println("############## gpmz ###############")
+	//fmt.Println(gpmz);
 
 	// z.y^n
 	vz, _ := VectorCopy(z, zkrp.N)
@@ -872,7 +1079,7 @@ func (zkrp *bp) Verify (proof proofBP) (bool, error) {
 	// h^mu
 	rP := new(p256).ScalarMult(zkrp.H, proof.Mu)
 	rP.Multiply(rP, proof.Commit)
-	
+
 	// Subtract lhs and rhs and compare with poitn at infinity
 	lP = lP.Neg(lP)
 	rP.Add(rP, lP)
@@ -910,8 +1117,8 @@ type proofBip struct {
 	Rs []*p256
 	U *p256
 	P *p256
-	g *p256
-	h *p256
+	Gg *p256
+	Hh *p256
 	A *big.Int
 	B *big.Int
 	N int64
@@ -973,6 +1180,7 @@ func (zkip *bip) Setup(H *p256, g,h []*p256, c *big.Int) (bip, error) {
 	zkip.Gg = g
 	zkip.Hh = h
 	zkip.Cc = c
+	zkip.P = new(p256).SetInfinity();
 
 	return params, nil
 }
@@ -1004,6 +1212,7 @@ func (zkip *bip) Prove(a,b []*big.Int, P *p256) (proofBip, error) {
 		// Execute Protocol 2 recursively
 		zkip.P = PP
 		proof, err := BIP(a, b, zkip.Gg, zkip.Hh, ux, zkip.P, n, Ls, Rs)
+		proof.P = PP
 		return proof, err
 	}
 		
@@ -1026,8 +1235,8 @@ func BIP(a,b []*big.Int, g,h []*p256, u,P *p256, n int64, Ls,Rs []*p256) (proofB
 		// recursion end
 		proof.A = a[0]
 		proof.B = b[0]
-		proof.g = g[0]
-		proof.h = h[0]
+		proof.Gg = g[0]
+		proof.Hh = h[0]
 		proof.P = P
 		proof.U = u
 		proof.Ls = Ls
@@ -1127,7 +1336,6 @@ func (zkip *bip) Verify(proof proofBip) (bool, error) {
 		x2inv = ModInverse(x2, ORDER)
 		Pprime.Multiply(Pprime, new(p256).ScalarMult(proof.Ls[i], x2))
 		Pprime.Multiply(Pprime, new(p256).ScalarMult(proof.Rs[i], x2inv))
-
 		i = i + 1
 	}
 

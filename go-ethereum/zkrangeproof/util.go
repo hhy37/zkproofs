@@ -71,7 +71,8 @@ func CommitG1(x,r *big.Int, h *p256) (*p256, error) {
 		C *p256
 	)
 	C = new(p256).ScalarBaseMult(x)
-	C.Add(C, new(p256).ScalarMult(h, r))
+	Hr := new(p256).ScalarMult(h, r)
+	C.Add(C, Hr)
 	return C, nil
 }
 
