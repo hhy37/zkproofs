@@ -3,7 +3,8 @@ jobs: # basic units of work in a run
   build: # runs not using Workflows must have a `build` job as entry point
     docker: # run the steps with Docker
       - image: circleci/golang:1.10.3
-    working_directory: /go/src/github.com/ing-bank/zkproofs 
+    working_directory: /go/src/github.com/ing-bank/zkproofs/go-ethereum/zkproofs
+
 
     environment: # environment variables for the build itself
       TEST_RESULTS: /tmp/test-results # path to where test results will be saved
@@ -14,7 +15,7 @@ jobs: # basic units of work in a run
       - restore_cache: # restores saved cache if no changes are detected since last run
           keys:
             - v1-pkg-cache
-      - run: cd go-ethereum/zkproofs
+              #- run: cd go-ethereum/zkproofs
       - run: go test
       - run: go get github.com/jstemmer/go-junit-report
       - run:
