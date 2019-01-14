@@ -1,6 +1,4 @@
 version: 2 # use CircleCI 2.0
-    - go get -u "github.com/ing-bank/zkproofs/go-ethereum/crypto/bn256"
-    - go get -u "github.com/ing-bank/zkproofs/go-ethereum/byteconversion"
 jobs: # basic units of work in a run
 
   build: # runs not using Workflows must have a `build` job as entry point
