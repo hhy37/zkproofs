@@ -20,6 +20,9 @@ jobs:
     working_directory: /go/src/github.com/ing-bank/zkproofs 
     steps:
       - checkout
+      - run:
+              name: ZKP
+              command: echo Testing ZKP
       - run: cd go-ethereum/zkproofs/
       - run: ls -l
       - run: go test
