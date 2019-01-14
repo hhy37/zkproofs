@@ -18,6 +18,8 @@ jobs: # basic units of work in a run
               #- run: cd go-ethereum/zkproofs
       - run: cd go-ethereum/zkproofs/; go test; 
       - run: go get github.com/jstemmer/go-junit-report
+      - run: go get "github.com/ing-bank/zkproofs/go-ethereum/byteconversion"
+      - run: go get "github.com/ing-bank/zkproofs/go-ethereum/crypto/bn256"
       - run:
           name: Run unit tests
           # Store the results of our tests in the $TEST_RESULTS directory
