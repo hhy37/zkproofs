@@ -21,7 +21,7 @@ Jan Camenisch, Rafik Chaabouni, abhi shelat
 Asiacrypt 2008
 */
 
-package zkrangeproof
+package zkproofs
 
 import (
 	"errors"
