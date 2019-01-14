@@ -19,7 +19,7 @@ package zkrangeproof
 import (
   "math/big"
   "crypto/sha256"
-  "../byteconversion"
+  "github.com/ing-bank/zkproofs/go-ethereum/byteconversion"
 )
 
 var k1 = new(big.Int).SetBit(big.NewInt(0), 160, 1) // 2^160, security parameter that should match prover

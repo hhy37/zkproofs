@@ -30,7 +30,7 @@ import (
 	"math/big"
 	"math"
 	"crypto/rand"
-	"../crypto/bn256"
+	"github.com/ing-bank/zkproofs/go-ethereum/crypto/bn256"
 )
 
 /*
