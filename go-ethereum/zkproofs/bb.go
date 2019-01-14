@@ -20,7 +20,7 @@ import (
 	"errors"
 	"crypto/rand"
 	"math/big"
-	"github.com/ing-bank/zkrangeproof/go-ethereum/crypto/bn256"
+	"github.com/ing-bank/zkproofs/go-ethereum/crypto/bn256"
 )
 
 type keypair struct {
