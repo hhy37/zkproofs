@@ -25,3 +25,11 @@ jobs:
       - run: cd go-ethereum/zkproofs/
       - run: ls -l
       - run: go test
+workflows:
+  version: 2
+  test:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: master
