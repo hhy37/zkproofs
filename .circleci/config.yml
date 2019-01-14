@@ -15,15 +15,13 @@ jobs: # basic units of work in a run
       - restore_cache: # restores saved cache if no changes are detected since last run
           keys:
             - v1-pkg-cache
-              #- run: cd go-ethereum/zkproofs
-      - run: go get "github.com/ing-bank/zkproofs/go-ethereum/byteconversion"
-      - run: go get "github.com/ing-bank/zkproofs/go-ethereum/crypto/bn256"
-      - run: cd go-ethereum/zkproofs/; go test; 
+              #- run: cd go-ethereum/zkproofs/; go test; 
       - run: go get github.com/jstemmer/go-junit-report
       - run:
           name: Run unit tests
           # Store the results of our tests in the $TEST_RESULTS directory
           command: |
+            cd go-ethereum/zkproofs/;
             trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
             go test -v | tee ${TEST_RESULTS}/go-test.out
       - store_artifacts: # Upload test summary for display in Artifacts: https://circleci.com/docs/2.0/artifacts/
