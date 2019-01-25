@@ -220,6 +220,7 @@ contract BP {
         
     uint256[32] hhprimex;
     uint256[32] hhprimey;
+    event Log(address id, string s);
         
     function verifyIP(
     ) public constant  
@@ -246,6 +247,7 @@ contract BP {
 	nprime = 32;
 
 	for(i=0;i<5;i++) {
+	    emit Log(address(0), "OK");
             nlast = nprime;
 	    nprime = nprime / 2;
 	    (dt.xx,) = Util.hashBP(zkproofIP.Lsx[i], zkproofIP.Lsy[i], zkproofIP.Rsx[i], zkproofIP.Rsy[i]); 
