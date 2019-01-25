@@ -25,7 +25,7 @@ The Zero Knowledge Range Proof requires a commitment on a number by a trusted pa
 
 ### Zero Knowledge Set Membership Proofs
 
-> **Since ZKRP is a subcase of ZK Set Membership Proofs, the latter may be used as a replacement of ZKRP. This is interesting because for certain is scenarios it performs better.**
+> **Since ZKRP is a subcase of ZK Set Membership Proofs, the latter may be used as a replacement of ZKRP. This is interesting because for certain scenarios it performs better.**
 
 ZKSM allows to prove that some secret value is an element of a determined set, without disclosing which value. We can do the following examples using it:
 
