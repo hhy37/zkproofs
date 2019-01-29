@@ -14,30 +14,10 @@ contract BP {
 
     BPStructs.ipProof public zkproofIP;
 
-    uint256[32] hhprimex;
-    uint256[32] hhprimey;
-
-
     constructor() public {
         ec = new EC();
     }
 
-    function setProofIP(
-        uint256 Px,
-        uint256 Py,
-        uint256 A,
-        uint256 B,
-        uint256 Ux,
-        uint256 Uy
-    ) public
-    {
-        zkproofIP.Px = Px;
-        zkproofIP.Py = Py;
-        zkproofIP.A = A;
-        zkproofIP.B = B;
-        zkproofIP.Ux = Ux;
-        zkproofIP.Uy = Uy;
-    }
 
     function setProofIPArray(
         uint256 Lsx,
@@ -53,16 +33,18 @@ contract BP {
         zkproofIP.Rsy[i] = Rsy;
     }
 
-    function updateGens(
-        uint256[32] Hhx,
-        uint256[32] Hhy
-    ) public
-    {
-        hhprimex = Hhx;
-        hhprimey = Hhy;
-    }
+    uint8 Px = 0;
+    uint8 Py = 1;
+    uint8 A  = 2;
+    uint8 B  = 3;
+    uint8 Ux = 4;
+    uint8 Uy = 5;
 
-    function verifyIP() public constant returns (bool result) {
+function verifyIP(
+    uint256[] args,
+    uint256[32] hhprimex,
+    uint256[32] hhprimey
+) public constant returns (bool result) {
 
         uint256 i;
         uint256 nprime;
@@ -81,8 +63,8 @@ contract BP {
         dt.hhprimey = hhprimey;
         //hhprimex = Hhx;
         //hhprimey = Hhy;
-        dt.Pprimex = zkproofIP.Px;
-        dt.Pprimey = zkproofIP.Py;
+        dt.Pprimex = args[Px];
+        dt.Pprimey = args[Py];
         nprime = 32;
 
         for (i = 0; i < 5; i++) {
@@ -108,12 +90,12 @@ contract BP {
             (dt.Pprimex, dt.Pprimey) = ec.ecadd(dt.Pprimex, dt.Pprimey, dt.Rsx2invx, dt.Rsx2invy);
         }
 
-        ab = mulmod(zkproofIP.A, zkproofIP.B, n);
+        ab = mulmod(args[A], args[B], n);
 
-        (dt.nrhsx, dt.nrhsy) = ec.ecmul(dt.ggprimex[0], dt.ggprimey[0], zkproofIP.A);
-        (dt.hbx, dt.hby) = ec.ecmul(dt.hhprimex[0], dt.hhprimey[0], zkproofIP.B);
+        (dt.nrhsx, dt.nrhsy) = ec.ecmul(dt.ggprimex[0], dt.ggprimey[0], args[A]);
+        (dt.hbx, dt.hby) = ec.ecmul(dt.hhprimex[0], dt.hhprimey[0], args[B]);
         (dt.nrhsx, dt.nrhsy) = ec.ecadd(dt.nrhsx, dt.nrhsy, dt.hbx, dt.hby);
-        (dt.uabx, dt.uaby) = ec.ecmul(zkproofIP.Ux, zkproofIP.Uy, ab);
+        (dt.uabx, dt.uaby) = ec.ecmul(args[Ux], args[Uy], ab);
         (dt.nrhsx, dt.nrhsy) = ec.ecadd(dt.nrhsx, dt.nrhsy, dt.uabx, dt.uaby);
 
         (dt.nPx, dt.nPy) = ec.neg(dt.Pprimex, dt.Pprimey);
