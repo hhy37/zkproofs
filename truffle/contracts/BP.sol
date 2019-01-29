@@ -12,25 +12,9 @@ contract BP {
 
     EC ec;
 
-    BPStructs.ipProof public zkproofIP;
 
     constructor() public {
         ec = new EC();
-    }
-
-
-    function setProofIPArray(
-        uint256 Lsx,
-        uint256 Lsy,
-        uint256 Rsx,
-        uint256 Rsy,
-        uint256 i
-    ) public
-    {
-        zkproofIP.Lsx[i] = Lsx;
-        zkproofIP.Lsy[i] = Lsy;
-        zkproofIP.Rsx[i] = Rsx;
-        zkproofIP.Rsy[i] = Rsy;
     }
 
     uint8 Px = 0;
@@ -43,8 +27,9 @@ contract BP {
 function verifyIP(
     uint256[] args,
     uint256[32] hhprimex,
-    uint256[32] hhprimey
-) public constant returns (bool result) {
+    uint256[32] hhprimey,
+    uint256[24] proofIPArray
+) public view returns (bool result) {
 
         uint256 i;
         uint256 nprime;
@@ -69,6 +54,12 @@ function verifyIP(
 
         for (i = 0; i < 5; i++) {
             emit Log(address(0), "OK");
+
+            Lsx = proofIPArray[i*4];
+            Lsy = proofIPArray[i*4 + 1];
+            Rsx = proofIPArray[i*4 + 2];
+            Rsy = proofIPArray[i*4 + 3];
+
             nlast = nprime;
             nprime = nprime / 2;
             (dt.xx,) = Util.hashBP(zkproofIP.Lsx[i], zkproofIP.Lsy[i], zkproofIP.Rsx[i], zkproofIP.Rsy[i]);
@@ -122,8 +113,12 @@ function verifyIP(
     uint8 Commity = 14;
 
     function verifyBP(
-        uint256[] args
-    ) public constant returns (uint256 result) {
+        uint256[] bpargs,
+        uint256[] ipargs,
+        uint256[32] hhprimex,
+        uint256[32] hhprimey,
+        uint256[24] proofIPArray
+    ) public view returns (uint256 result) {
 
         uint256 i;
         bool ok;
@@ -138,8 +133,8 @@ function verifyIP(
         dt.Hhx = Generators.getHhx();
         dt.Hhy = Generators.getHhy();
 
-        (dt.y, dt.z) = Util.hashBP(args[Ax], args[Ay], args[Sx], args[Sy]);
-        (dt.x,) = Util.hashBP(args[T1x], args[T1y], args[T2x], args[T2y]);
+        (dt.y, dt.z) = Util.hashBP(bpargs[Ax], bpargs[Ay], bpargs[Sx], bpargs[Sy]);
+        (dt.x,) = Util.hashBP(bpargs[T1x], bpargs[T1y], bpargs[T2x], bpargs[T2y]);
 
         dt.yinv = ec._invF(dt.y);
         dt.expy = dt.yinv;
@@ -151,20 +146,20 @@ function verifyIP(
         }
 
         // CommitG1
-        (dt.lhsx, dt.lhsy) = Auxiliar.pedersen(args[Tprime], args[Taux]);
+        (dt.lhsx, dt.lhsy) = Auxiliar.pedersen(bpargs[Tprime], bpargs[Taux]);
 
         dt.z2 = mulmod(dt.z, dt.z, n);
         dt.x2 = mulmod(dt.x, dt.x, n);
 
-        (dt.rhsx, dt.rhsy) = ec.ecmul(args[Vx], args[Vy], dt.z2);
+        (dt.rhsx, dt.rhsy) = ec.ecmul(bpargs[Vx], bpargs[Vy], dt.z2);
         (dt.delta) = Auxiliar.Delta(dt.y, dt.z);
 
         (dt.gdeltax, dt.gdeltay) = ec.ecmul(dt.Gx, dt.Gy, dt.delta);
 
         (dt.rhsx, dt.rhsy) = ec.ecadd(dt.rhsx, dt.rhsy, dt.gdeltax, dt.gdeltay);
 
-        (dt.T1xx, dt.T1xy) = ec.ecmul(args[T1x], args[T1y], dt.x);
-        (dt.T2x2x, dt.T2x2y) = ec.ecmul(args[T2x], args[T2y], dt.x2);
+        (dt.T1xx, dt.T1xy) = ec.ecmul(bpargs[T1x], bpargs[T1y], dt.x);
+        (dt.T2x2x, dt.T2x2y) = ec.ecmul(bpargs[T2x], bpargs[T2y], dt.x2);
 
         (dt.rhsx, dt.rhsy) = ec.ecadd(dt.rhsx, dt.rhsy, dt.T1xx, dt.T1xy);
         (dt.rhsx, dt.rhsy) = ec.ecadd(dt.rhsx, dt.rhsy, dt.T2x2x, dt.T2x2y);
@@ -181,8 +176,8 @@ function verifyIP(
 
         /////////////////////////////////////////////////////////////////////////////
 
-        (dt.Sxx, dt.Sxy) = ec.ecmul(args[Sx], args[Sy], dt.x);
-        (dt.ASx, dt.ASy) = ec.ecadd(args[Ax], args[Ay], dt.Sxx, dt.Sxy);
+        (dt.Sxx, dt.Sxy) = ec.ecmul(bpargs[Sx], bpargs[Sy], dt.x);
+        (dt.ASx, dt.ASy) = ec.ecadd(bpargs[Ax], bpargs[Ay], dt.Sxx, dt.Sxy);
 
         dt.mz = n - dt.z;
         dt.vmz = Auxiliar.VectorCopy(dt.mz);
@@ -205,8 +200,8 @@ function verifyIP(
 
         /////////////////////////////////////////////////////////////////////////////
 
-        (dt.rPx, dt.rPy) = ec.ecmul(dt.Hx, dt.Hy, args[Mu]);
-        (dt.rPx, dt.rPy) = ec.ecadd(dt.rPx, dt.rPy, args[Commitx], args[Commity]);
+        (dt.rPx, dt.rPy) = ec.ecmul(dt.Hx, dt.Hy, bpargs[Mu]);
+        (dt.rPx, dt.rPy) = ec.ecadd(dt.rPx, dt.rPy, bpargs[Commitx], bpargs[Commity]);
 
         (dt.lPx, dt.lPy) = ec.neg(dt.lPx, dt.lPy);
         (dt.rPx, dt.rPy) = ec.ecadd(dt.rPx, dt.rPy, dt.lPx, dt.lPy);
@@ -220,11 +215,11 @@ function verifyIP(
 
         /////////////////////////////////////////////////////////////////////////////
 
-        /*ok = verifyIP();
+        ok = verifyIP(ipargs, hhprimex, hhprimey, proofIPArray);
         if (!ok) {
             result = 69;
             return;
-        }*/
+        }
         result = 1;
     }
 }
