@@ -30,77 +30,105 @@ contract('BP', async function ([_, wallet1, wallet2, wallet3, wallet4, wallet5])
     before(async function () {
         bp = await BP.new();
     });
+
+
+	// =============== BP =========================================================
+
     
-    it('should setup the BP proof', async function () {
-        await bp.setProofRP(
-		new BigNumber(proof.V.X, 10), 
-		new BigNumber(proof.V.Y, 10), 
-		new BigNumber(proof.A.X, 10), 
-		new BigNumber(proof.A.Y, 10), 
-		new BigNumber(proof.S.X, 10), 
-		new BigNumber(proof.S.Y, 10),
-		new BigNumber(proof.T1.X, 10),
-		new BigNumber(proof.T1.Y, 10),
-		new BigNumber(proof.T2.X, 10),
-		new BigNumber(proof.T2.Y, 10),
-		new BigNumber(proof.Tprime, 10),
-		new BigNumber(proof.Taux, 10),
-		new BigNumber(proof.Mu, 10)
-		);
-        await bp.setCommitRP(
-		new BigNumber(proof.Commit.X, 10),
-		new BigNumber(proof.Commit.Y, 10)
-		);
+    it('should verify the BP+IP proof', async function () {
+
+		var uHx = [];
+		var uHy = [];
+		for (i=0;i<32;i++) {
+			uHx[i] = new BigNumber(setup.Zkip.Hh[i].X, 10);
+			uHy[i] = new BigNumber(setup.Zkip.Hh[i].Y, 10);
+		}
+
+		let proofIPArray = [];
+		for (let i = 0; i < 5; i++) {
+				proofIPArray[i*4    ] = new BigNumber(proof.Proofip.Ls[i].X, 10);
+				proofIPArray[i*4 + 1] = new BigNumber(proof.Proofip.Ls[i].Y, 10);
+				proofIPArray[i*4 + 2] = new BigNumber(proof.Proofip.Rs[i].X, 10);
+				proofIPArray[i*4 + 3] = new BigNumber(proof.Proofip.Rs[i].Y, 10);
+		}
+
+        var result = await bp.verifyBP(
+        	// bpargs
+        	[
+				new BigNumber(proof.V.X, 10),
+				new BigNumber(proof.V.Y, 10),
+				new BigNumber(proof.A.X, 10),
+				new BigNumber(proof.A.Y, 10),
+				new BigNumber(proof.S.X, 10),
+				new BigNumber(proof.S.Y, 10),
+				new BigNumber(proof.T1.X, 10),
+				new BigNumber(proof.T1.Y, 10),
+				new BigNumber(proof.T2.X, 10),
+				new BigNumber(proof.T2.Y, 10),
+				new BigNumber(proof.Tprime, 10),
+				new BigNumber(proof.Taux, 10),
+				new BigNumber(proof.Mu, 10),
+				new BigNumber(proof.Commit.X, 10),
+				new BigNumber(proof.Commit.Y, 10)
+			],
+			// ipargs
+			[
+				new BigNumber(proof.Proofip.P.X, 10),
+				new BigNumber(proof.Proofip.P.Y, 10),
+				new BigNumber(proof.Proofip.A, 10),
+				new BigNumber(proof.Proofip.B, 10),
+				new BigNumber(proof.Proofip.U.X, 10),
+				new BigNumber(proof.Proofip.U.Y, 10)
+			],
+			// hhprimex and y
+			uHx,
+			uHy,
+			// proofIPArray
+			proofIPArray,
+			{ gas: 2000000000 } );
+		log("result="+result);
     });
-    
-    it('should setup the IP proof', async function () {
-	var i;
-	await bp.setProofIP(	
-		new BigNumber(proof.Proofip.P.X, 10),
-		new BigNumber(proof.Proofip.P.Y, 10),
-		new BigNumber(proof.Proofip.A, 10),
-		new BigNumber(proof.Proofip.B, 10),
-		new BigNumber(proof.Proofip.U.X, 10),
-		new BigNumber(proof.Proofip.U.Y, 10)
-	);
-	for (i=0;i<5;i++) {
-		await bp.setProofIPArray(
-			new BigNumber(proof.Proofip.Ls[i].X, 10),
-			new BigNumber(proof.Proofip.Ls[i].Y, 10),
-			new BigNumber(proof.Proofip.Rs[i].X, 10),
-			new BigNumber(proof.Proofip.Rs[i].Y, 10),
-			i
-		);
-	}
-	var uHx = [];
-	var uHy = [];
-	for (i=0;i<32;i++) {
-		uHx[i] = new BigNumber(setup.Zkip.Hh[i].X, 10);
-		uHy[i] = new BigNumber(setup.Zkip.Hh[i].Y, 10);
-	}
-	await bp.updateGens(
-		uHx,
-		uHy		
-	);
-    });
 
-    
-    it('should verify the BP proof', async function () {
-        var result = await bp.verifyBP( { gas: 130000000 } );
-	log("result="+result);
-    });
-    
-    it('should verify the IP proof', async function () {
+    // =============== IP =========================================================
 
-        var result = await bp.verifyIP( { gas: 200000000 } );
 
-	bp.Log({}).watch((error, result) => {
-	  log(error);
-	  log(result);
-	})
-	    
+	it('should verify the IP proof', async function () {
 
-	log("result="+result);
+		// Setup
+		var uHx = [];
+		var uHy = [];
+		for (i=0;i<32;i++) {
+			uHx[i] = new BigNumber(setup.Zkip.Hh[i].X, 10);
+			uHy[i] = new BigNumber(setup.Zkip.Hh[i].Y, 10);
+		}
+
+		let proofIPArray = [];
+		for (let i = 0; i < 5; i++) {
+			proofIPArray[i*4    ] = new BigNumber(proof.Proofip.Ls[i].X, 10);
+			proofIPArray[i*4 + 1] = new BigNumber(proof.Proofip.Ls[i].Y, 10);
+			proofIPArray[i*4 + 2] = new BigNumber(proof.Proofip.Rs[i].X, 10);
+			proofIPArray[i*4 + 3] = new BigNumber(proof.Proofip.Rs[i].Y, 10);
+		}
+
+        var result = await bp.verifyIP([
+			new BigNumber(proof.Proofip.P.X, 10),
+			new BigNumber(proof.Proofip.P.Y, 10),
+			new BigNumber(proof.Proofip.A, 10),
+			new BigNumber(proof.Proofip.B, 10),
+			new BigNumber(proof.Proofip.U.X, 10),
+			new BigNumber(proof.Proofip.U.Y, 10)],
+
+			uHx,
+			uHy,
+
+			proofIPArray,
+        	{ gas: 300000000000 } );
+		bp.Log({}).watch((error, result) => {
+		  log(error);
+		  log(result);
+		})
+		log("result="+result);
         assert.equal(result, true, "Invalid result");
     });
+
 });
