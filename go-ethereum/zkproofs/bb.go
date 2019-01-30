@@ -16,6 +16,13 @@
 
 package zkproofs
 
+/*
+This file contains the implementation of the BB signature scheme proposed in the paper:
+Short signatures without random oracle
+Boneh and Boyen
+Eurocrypt 2004
+*/
+
 import (
 	"errors"
 	"crypto/rand"

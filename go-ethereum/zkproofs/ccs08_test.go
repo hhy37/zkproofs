@@ -128,11 +128,21 @@ func TestZKSet(t *testing.T) {
 	s[0] = 12
 	s[1] = 42
 	s[2] = 61
-	s[2] = 71
+	s[3] = 71
+	startTime := time.Now()
 	p, _ := SetupSet(s)
+	setupTime := time.Now()
+	fmt.Println(" ############### Setup time:")
+	fmt.Println(setupTime.Sub(startTime))
 	r, _ = rand.Int(rand.Reader, bn256.Order)
 	proof_out, _ := ProveSet(12, r, p)
+	proofTime := time.Now()
+	fmt.Println("Proof time:")
+	fmt.Println(proofTime.Sub(setupTime))
 	result, _ := VerifySet(&proof_out, &p)
+	verifyTime := time.Now()
+	fmt.Println("Verify time:")
+	fmt.Println(verifyTime.Sub(proofTime))
 	fmt.Println("ZK Set Membership result: ")
 	fmt.Println(result)
 	if result != true {
@@ -148,14 +158,24 @@ func TestZKRP(t *testing.T) {
 		result bool
 		zkrp ccs08 
 	)
-	zkrp.Setup(1900, 2000)
-	zkrp.x = new(big.Int).SetInt64(1983)
+	startTime := time.Now()
+	zkrp.Setup(347184000, 599644800)
+	setupTime := time.Now()
+	fmt.Println(" ############### Setup time:")
+	fmt.Println(setupTime.Sub(startTime))
+	zkrp.x = new(big.Int).SetInt64(419835123)
 	zkrp.r, _ = rand.Int(rand.Reader, bn256.Order)
 	e := zkrp.Prove()
+	proofTime := time.Now()
+	fmt.Println("Proof time:")
+	fmt.Println(proofTime.Sub(setupTime))
 	if e != nil {
 		fmt.Println(e.Error())
 	} 
 	result, _ = zkrp.Verify()
+	verifyTime := time.Now()
+	fmt.Println("Verify time:")
+	fmt.Println(verifyTime.Sub(proofTime))
 	fmt.Println("ZKRP result: ")
 	fmt.Println(result)
 	if result != true {
