@@ -35,7 +35,7 @@ ZKSM allows to prove that some secret value is an element of a determined set, w
 * Other interesting applications like: Anti-Money Laundering (AML) and Common Reference Standard (CRS).
 
 
-## Bulletproofs
+### Bulletproofs
 
 In 2017 researchers proposed the scheme called Bulletproofs to provide a more efficient solution for Zero Knowledge Range Proofs (ZKRP). It was specifically designed for Blockchain, where it is important to have short proofs. For instance, Bulletproofs allows to construct proofs whose size is only logarithmic with respect to the input size. Also, Bulletproofs doesn't require a trusted setup, solving an important problem in order to use this technology to solve practical problems. Previous solutions do require a trusted setup, what means that if the setup is not carried out in an appropriate way, then it would be possible to generate fake ZK proofs. 
 
