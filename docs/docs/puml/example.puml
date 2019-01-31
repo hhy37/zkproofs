@@ -1,0 +1,18 @@
+
+@startuml
+
+box "Admin Portal Frontend" #LightBlue
+
+endbox
+
+box "Backend" #LightBlue
+
+participant "API" as NODE
+
+endbox
+
+collections "Ledger" as L
+
+L -> B: Example flow page
+
+@enduml
