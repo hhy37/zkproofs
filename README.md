@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/ing-bank/zkproofs/tree/master.svg?style=shield)](https://circleci.com/gh/ing-bank/zkproofs/tree/master)
+
 # Zero Knowledge Proofs
 
 This repository contains ING's **Zero Knowledge Range Proof (ZKRP)** and **Zero Knowledge Set Membership (ZKSM)**. The current implementations are based on the following papers:
