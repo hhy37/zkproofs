@@ -21,7 +21,7 @@ Benedikt Bunz, Jonathan Bootle, Dan Boneh, Andrew Poelstra, Pieter Wuille and Gr
 Asiacrypt 2008
 */
 
-package zkrangeproof
+package zkproofs
 
 import (
 	"bytes"
@@ -29,7 +29,7 @@ import (
 	"math/big"
 	"crypto/rand"
 	"crypto/sha256"
-	"github.com/ing-bank/zkrangeproof/go-ethereum/byteconversion"
+	"github.com/ing-bank/zkproofs/go-ethereum/byteconversion"
 	"errors"
 	"encoding/json"
 	"io/ioutil"

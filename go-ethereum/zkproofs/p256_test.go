@@ -1,11 +1,11 @@
 
-package zkrangeproof
+package zkproofs
 
 import (
 	"crypto/rand"
 	"testing"
 	"math/big"
-	"github.com/ing-bank/zkrangeproof/go-ethereum/crypto/secp256k1"
+	"github.com/ing-bank/zkproofs/go-ethereum/crypto/secp256k1"
 )
 
 const TestCount = 1000

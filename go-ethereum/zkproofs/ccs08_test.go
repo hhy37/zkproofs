@@ -22,6 +22,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"github.com/ing-bank/zkproofs/go-ethereum/crypto/bn256"
+	"time"
 )
 
 /*
